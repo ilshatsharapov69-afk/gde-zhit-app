@@ -37,6 +37,7 @@ function writeCache(countries) {
 }
 
 export function render(root) {
+  _state = { filter: 'all', sort: 'score' }; // reset on each navigation (module singleton)
   track(EVENTS.VIEW_COUNTRIES);
 
   const head = document.createElement('div');

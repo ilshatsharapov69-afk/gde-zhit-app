@@ -56,7 +56,7 @@ export function scoreBand(score) {
   return { key: 'cold', color: 'var(--gzh-tier-cold)' };
 }
 
-const esc = (s) => String(s == null ? '' : s)
+export const esc = (s) => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 // Flag emoji → ISO-3166 alpha-2 (regional indicators), so we can render crisp SVG

@@ -2,6 +2,9 @@
 // only BASE_URL / source differs. Every request carries Authorization: "tma <initData>".
 import { BASE_URL, MOCK, MOCK_RESULT_KEY, getTg } from './main.js';
 
+// Frontend telemetry vocabulary (POST /api/event {type}). MASTER-SPEC §4.6 does not
+// freeze the event enum — align these with Session 1's backend in Phase 2 (CONTRACT.md).
+// track() is fire-and-forget: unknown types rejected by the backend never affect the UI.
 export const EVENTS = Object.freeze({
   OPEN:               'open',
   VIEW_RESULT:        'view_result',

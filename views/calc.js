@@ -1,6 +1,7 @@
 // views/calc.js — переезд calculator: from/to/date → /api/calc → price + promo + deep_link.
 import { haptic, openExtLink, copyText, toast } from '../main.js';
 import { getCalc, track, EVENTS } from '../api.js';
+import { esc } from './result.js';
 
 const ORIGINS = [
   ['MOW', 'Москва'], ['LED', 'Санкт-Петербург'], ['SVX', 'Екатеринбург'],
@@ -88,13 +89,13 @@ function submit(result, q) {
       haptic('error');
       return;
     }
-    const cur = res.currency === 'USD' ? '$' : (res.currency || '');
-    const route = `${labelOf(ORIGINS, q.from)} → ${labelOf(DESTS, q.to)} · ${q.depart}`;
+    const cur = res.currency === 'USD' ? '$' : esc(res.currency || '');
+    const route = `${labelOf(ORIGINS, q.from)} → ${labelOf(DESTS, q.to)} · ${esc(q.depart)}`;
     result.innerHTML = `
       <div class="price-block">
         <div class="route">${route}</div>
-        <div class="price-big">от ${cur}${res.price_usd}<small> в одну сторону</small></div>
-        ${res.promo ? `<div class="promo-chip" id="promo">Промокод: <span class="code">${res.promo}</span><span class="copy">копировать</span></div>` : ''}
+        <div class="price-big">от ${cur}${esc(String(res.price_usd ?? ''))}<small> в одну сторону</small></div>
+        ${res.promo ? `<div class="promo-chip" id="promo">Промокод: <span class="code">${esc(res.promo)}</span><span class="copy">копировать</span></div>` : ''}
         <button class="btn btn-gold" id="buy" style="margin-top:16px">Найти билет</button>
       </div>`;
     haptic('success');
@@ -108,8 +109,10 @@ function submit(result, q) {
     result.querySelector('#buy').addEventListener('click', () => {
       track(EVENTS.CLICK_CALC_BUY, { to: q.to });
       haptic('medium');
-      // deep_link is opaque (may carry TP_MARKER in mock) — never parse/rewrite client-side
-      openExtLink(res.deep_link || 'https://www.aviasales.ru/');
+      // deep_link is opaque (may carry TP_MARKER in mock) — never parse/rewrite client-side,
+      // but reject non-http(s) schemes (e.g. javascript:) before opening.
+      const link = res.deep_link || 'https://www.aviasales.ru/';
+      openExtLink(/^https?:\/\//i.test(link) ? link : 'https://www.aviasales.ru/');
     });
   });
 }

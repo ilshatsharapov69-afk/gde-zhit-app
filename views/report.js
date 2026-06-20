@@ -1,7 +1,7 @@
 // views/report.js — saved подбор (localStorage), instant render + background revalidate + share.
 import { go, haptic, openTgLink, copyText, toast, BOT_USERNAME } from '../main.js';
 import { getResult, track, EVENTS } from '../api.js';
-import { flagMarkup } from './result.js';
+import { flagMarkup, esc } from './result.js';
 
 const CACHE = 'gdezhit:result:v1';
 const TIERS = {
@@ -9,8 +9,6 @@ const TIERS = {
   warm: { emoji: '🌡', label: 'Тепло',   cls: 'warm' },
   cold: { emoji: '❄️', label: 'Холодно', cls: 'cold' },
 };
-const esc = (s) => String(s == null ? '' : s).replace(/</g, '&lt;');
-
 function readCache() {
   try { return JSON.parse(localStorage.getItem(CACHE) || 'null'); } catch { return null; }
 }
