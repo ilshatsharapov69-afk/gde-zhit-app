@@ -1,0 +1,636 @@
+{
+  "_comment": "Consolidated mock for the deployed Pages app (MOCK mode). Single source of truth: result_hot.top_countries are sliced from the same grounded 'countries' objects so a country shows identical figures on result & countries screens. Card format = MASTER-SPEC §4.4, responses = §4.6. Session 1 regenerates result_* from the real scorer.",
+  "result_hot": {
+    "ok": true,
+    "has_result": true,
+    "data": {
+      "score_tier": "hot",
+      "budget_band": "mid",
+      "created_at": 1781000000,
+      "segments": [
+        "visa_specialist",
+        "residence_program"
+      ],
+      "top_countries": [
+        {
+          "code": "georgia",
+          "name_ru": "Грузия",
+          "flag_emoji": "🇬🇪",
+          "fit_score": 94,
+          "visa_free_days": 365,
+          "visa_pattern": "безвиз 365 дней",
+          "mir_works": false,
+          "unionpay_works": false,
+          "budget_month_usd": "600-900",
+          "birth_right": false,
+          "headline": "Безвиз 365 дней — проще всего въехать прямо сейчас",
+          "why": [
+            "безвиз год, сброс счётчика выездом на 1 день",
+            "территориальные налоги: иностранный доход не облагается",
+            "большая русскоязычная диаспора в Тбилиси, Тбилиси на 34% дешевле Москвы"
+          ],
+          "risk": "с 01.2026 обязательна страховка на 30 000 GEL (~$11 000), порог ВНЖ через недвижимость поднят $100k→$150k, отказы в банках 80-90%",
+          "tags": [
+            "cis",
+            "easy-entry",
+            "strict-banking",
+            "regulatory-changes"
+          ]
+        },
+        {
+          "code": "armenia",
+          "name_ru": "Армения",
+          "flag_emoji": "🇦🇲",
+          "fit_score": 88,
+          "visa_free_days": 180,
+          "visa_pattern": "безвиз 180 дней/год",
+          "mir_works": false,
+          "unionpay_works": true,
+          "budget_month_usd": "900-1200",
+          "birth_right": false,
+          "headline": "Самый низкий порог входа: въезд по внутреннему паспорту",
+          "why": [
+            "безвиз 180 дней в году, въезд по внутреннему паспорту РФ (только авиа)",
+            "простой путь ВНЖ через ИП, тёплое отношение населения",
+            "лояльные банки: Unibank, Ameriabank, Ardshinbank"
+          ],
+          "risk": "с 08.2025 банки собирают данные для автообмена с ФНС РФ, с 12.2025 блокировки переводов россиян из-за правил ЕС",
+          "tags": [
+            "cis",
+            "easy-entry",
+            "banking-risk"
+          ]
+        },
+        {
+          "code": "serbia",
+          "name_ru": "Сербия",
+          "flag_emoji": "🇷🇸",
+          "fit_score": 81,
+          "visa_free_days": 30,
+          "visa_pattern": "безвиз 30 дней, далее виза D / ВНЖ",
+          "mir_works": false,
+          "unionpay_works": false,
+          "budget_month_usd": "500-700",
+          "birth_right": false,
+          "headline": "Самое стабильное удержание, но «уходящий поезд»",
+          "why": [
+            "один из самых низких налогов в Европе (10% flat)",
+            "ВНЖ через ИП paušal или ООО, ПМЖ уже через 3 года",
+            "часть банков ещё открывает счета (Poshtanska Shtedionica, API Bank)"
+          ],
+          "risk": "с 03.2026 высылка россиян без ВНЖ (~150к под угрозой), ожидается визовый режим до конца 2026 ради EU-интеграции",
+          "tags": [
+            "europe",
+            "residence-business",
+            "paušal",
+            "mid-priority-risky"
+          ]
+        },
+        {
+          "code": "kazakhstan",
+          "name_ru": "Казахстан",
+          "flag_emoji": "🇰🇿",
+          "fit_score": 76,
+          "visa_free_days": 90,
+          "visa_pattern": "безвиз 90/180 (ЕАЭС)",
+          "mir_works": false,
+          "unionpay_works": true,
+          "budget_month_usd": "1000-1200",
+          "birth_right": false,
+          "headline": "Самая стабильная банковка для россиян в регионе",
+          "why": [
+            "безвиз 90/180, въезд по внутреннему паспорту РФ",
+            "Freedom Bank выдаёт 5-летние карты нерезидентам (с 09.2025)",
+            "сразу РПП на 10 лет вместо разделения врем./пост."
+          ],
+          "risk": "с 20.01.2026 дети только по загранпаспорту, с 01.07.2026 регистрация при пребывании >30 дней, визаран закрыт",
+          "tags": [
+            "cis",
+            "easy-entry",
+            "eaeu",
+            "banking-stable"
+          ]
+        }
+      ]
+    }
+  },
+  "result_empty": {
+    "ok": true,
+    "has_result": false
+  },
+  "countries": {
+    "ok": true,
+    "countries": [
+      {
+        "code": "georgia",
+        "name_ru": "Грузия",
+        "flag_emoji": "🇬🇪",
+        "fit_score": 94,
+        "visa_free_days": 365,
+        "visa_pattern": "безвиз 365 дней",
+        "mir_works": false,
+        "unionpay_works": false,
+        "budget_month_usd": "600-900",
+        "birth_right": false,
+        "headline": "Безвиз 365 дней — проще всего въехать прямо сейчас",
+        "why": [
+          "безвиз год, сброс счётчика выездом на 1 день",
+          "территориальные налоги: иностранный доход не облагается",
+          "большая русскоязычная диаспора в Тбилиси, Тбилиси на 34% дешевле Москвы"
+        ],
+        "risk": "с 01.2026 обязательна страховка на 30 000 GEL (~$11 000), порог ВНЖ через недвижимость поднят $100k→$150k, отказы в банках 80-90%",
+        "tags": [
+          "cis",
+          "easy-entry",
+          "strict-banking",
+          "regulatory-changes"
+        ]
+      },
+      {
+        "code": "armenia",
+        "name_ru": "Армения",
+        "flag_emoji": "🇦🇲",
+        "fit_score": 88,
+        "visa_free_days": 180,
+        "visa_pattern": "безвиз 180 дней/год",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "900-1200",
+        "birth_right": false,
+        "headline": "Самый низкий порог входа: въезд по внутреннему паспорту",
+        "why": [
+          "безвиз 180 дней в году, въезд по внутреннему паспорту РФ (только авиа)",
+          "простой путь ВНЖ через ИП, тёплое отношение населения",
+          "лояльные банки: Unibank, Ameriabank, Ardshinbank"
+        ],
+        "risk": "с 08.2025 банки собирают данные для автообмена с ФНС РФ, с 12.2025 блокировки переводов россиян из-за правил ЕС",
+        "tags": [
+          "cis",
+          "easy-entry",
+          "banking-risk"
+        ]
+      },
+      {
+        "code": "serbia",
+        "name_ru": "Сербия",
+        "flag_emoji": "🇷🇸",
+        "fit_score": 81,
+        "visa_free_days": 30,
+        "visa_pattern": "безвиз 30 дней, далее виза D / ВНЖ",
+        "mir_works": false,
+        "unionpay_works": false,
+        "budget_month_usd": "500-700",
+        "birth_right": false,
+        "headline": "Самое стабильное удержание, но «уходящий поезд»",
+        "why": [
+          "один из самых низких налогов в Европе (10% flat)",
+          "ВНЖ через ИП paušal или ООО, ПМЖ уже через 3 года",
+          "часть банков ещё открывает счета (Poshtanska Shtedionica, API Bank)"
+        ],
+        "risk": "с 03.2026 высылка россиян без ВНЖ (~150к под угрозой), ожидается визовый режим до конца 2026 ради EU-интеграции",
+        "tags": [
+          "europe",
+          "residence-business",
+          "paušal",
+          "mid-priority-risky"
+        ]
+      },
+      {
+        "code": "kazakhstan",
+        "name_ru": "Казахстан",
+        "flag_emoji": "🇰🇿",
+        "fit_score": 76,
+        "visa_free_days": 90,
+        "visa_pattern": "безвиз 90/180 (ЕАЭС)",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "1000-1200",
+        "birth_right": false,
+        "headline": "Самая стабильная банковка для россиян в регионе",
+        "why": [
+          "безвиз 90/180, въезд по внутреннему паспорту РФ",
+          "Freedom Bank выдаёт 5-летние карты нерезидентам (с 09.2025)",
+          "сразу РПП на 10 лет вместо разделения врем./пост."
+        ],
+        "risk": "с 20.01.2026 дети только по загранпаспорту, с 01.07.2026 регистрация при пребывании >30 дней, визаран закрыт",
+        "tags": [
+          "cis",
+          "easy-entry",
+          "eaeu",
+          "banking-stable"
+        ]
+      },
+      {
+        "code": "uzbekistan",
+        "name_ru": "Узбекистан",
+        "flag_emoji": "🇺🇿",
+        "fit_score": 73,
+        "visa_free_days": 90,
+        "visa_pattern": "безвиз 30 (без рег.) / 90 дней",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "650-700",
+        "birth_right": false,
+        "headline": "Самый дешёвый в СНГ и мощный банк-хаб",
+        "why": [
+          "Ташкент-окраина $288-323/мес — самое доступное направление",
+          "банк-хаб: Kapitalbank, Hamkorbank, Ravnaq Bank принимают россиян",
+          "ВНЖ на 5 лет, символическая госпошлина (~$0.48)"
+        ],
+        "risk": "с 01.04.2026 обязательный безнал — без местной карты жить сложно; фиксируются односторонние расторжения договоров банками",
+        "tags": [
+          "cis",
+          "cheap",
+          "banking-hub",
+          "cashless-mandate"
+        ]
+      },
+      {
+        "code": "thailand",
+        "name_ru": "Таиланд",
+        "flag_emoji": "🇹🇭",
+        "fit_score": 70,
+        "visa_free_days": 60,
+        "visa_pattern": "безвиз 60 дней + продление 30 = 90",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "570-700",
+        "birth_right": false,
+        "headline": "DTV на 5 лет — главный инструмент остаться надолго",
+        "why": [
+          "безвиз 60 дней (с 07.2024) + продление 30 до 90 дней за въезд",
+          "DTV на 5 лет: $13.9k на счёте, пошлина $280",
+          "Чианг Май — самое дешёвое из популярных направлений ($500-600/мес)"
+        ],
+        "risk": "с 2024 налог на иностранный доход при ввозе (arising basis, до 35%); в 2026 массовые отказы при продлении DTV",
+        "tags": [
+          "asia",
+          "dtv",
+          "digital-nomad",
+          "mid-priority"
+        ]
+      },
+      {
+        "code": "vietnam",
+        "name_ru": "Вьетнам",
+        "flag_emoji": "🇻🇳",
+        "fit_score": 68,
+        "visa_free_days": 45,
+        "visa_pattern": "безвиз 45 дней (до 14.03.2028) / e-visa 90",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "900-1500",
+        "birth_right": false,
+        "headline": "Щедрейший безвиз ЮВА — 45 дней до 2028 года",
+        "why": [
+          "безвиз 45 дней продлён до 14.03.2028, e-visa на 90 дней $25-50 онлайн",
+          "дёшево: Дананг $900-1500/мес, интернет $7/мес",
+          "исторически тёплое отношение, визит Путина 06.2024, товарооборот $5.7B"
+        ],
+        "risk": "нет DNV — удалёнка в серой зоне; карта МИР практически бесполезна, Golden Visa анонсирована но не запущена",
+        "tags": [
+          "asia",
+          "cheap",
+          "dn-grey-zone",
+          "friendly-russia"
+        ]
+      },
+      {
+        "code": "paraguay",
+        "name_ru": "Парагвай",
+        "flag_emoji": "🇵🇾",
+        "fit_score": 64,
+        "visa_free_days": 90,
+        "visa_pattern": "безвиз 90 дней; ВНЖ ~$550, ПМЖ через 2 года",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "700-900",
+        "birth_right": true,
+        "headline": "Один из самых дешёвых путей к ВНЖ (но не как пишут)",
+        "why": [
+          "депозит $5 000 отменён ещё в 2022 — ВНЖ теперь $550-650 госпошлин",
+          "территориальные налоги: иностранный доход 0%, для ПМЖ не нужны 183 дня",
+          "дёшево: 1BR центр Асунсьона $220-280/мес"
+        ],
+        "risk": "гражданство реально через 5 лет (2 ВНЖ + 3 ПМЖ), не 3; без седулы только краткосрочная аренда с предоплатой за полгода",
+        "tags": [
+          "latam",
+          "cheap-residency",
+          "fast-pmj",
+          "territorial-tax",
+          "myth-busted"
+        ]
+      },
+      {
+        "code": "malaysia",
+        "name_ru": "Малайзия",
+        "flag_emoji": "🇲🇾",
+        "fit_score": 60,
+        "visa_free_days": 30,
+        "visa_pattern": "безвиз 30 дней + обязательный eMDAC",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "1000-1500",
+        "birth_right": false,
+        "headline": "Дружественная РФ страна с налоговым соглашением",
+        "why": [
+          "не присоединилась к санкциям, налоговое соглашение РФ-MY в силе с 01.2025",
+          "DE Rantau (DNV) доступна россиянам: $24k/год IT, $60k не-IT",
+          "территориальные налоги: иностранный доход нерезидентов не облагается"
+        ],
+        "risk": "eMDAC обязателен с 01.2024 (без него отказ во въезде); счёт в банке только с ВНЖ, гражданство практически недоступно",
+        "tags": [
+          "asia",
+          "mm2h",
+          "de-rantau",
+          "friendly-russia",
+          "tax-treaty"
+        ]
+      },
+      {
+        "code": "brazil",
+        "name_ru": "Бразилия",
+        "flag_emoji": "🇧🇷",
+        "fit_score": 58,
+        "visa_free_days": 90,
+        "visa_pattern": "безвиз 90+90; DNV VITEM XIV $1500/мес",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "700-900",
+        "birth_right": true,
+        "headline": "Jus soli работает — роды дают гражданство ребёнку",
+        "why": [
+          "безвиз 90 дней + продление 90 = до 180 дней в году",
+          "DNV VITEM XIV: доход $1500/мес, ВНЖ на 2 года",
+          "Флорианополис — магнит русской диаспоры, нет анти-российских ограничений"
+        ],
+        "risk": "запись в Федеральную полицию ждать 1-3 месяца; UnionPay РФ с 08.2025 нестабилен, для счёта нужны CPF + CRNM",
+        "tags": [
+          "latam",
+          "digital-nomad",
+          "jus-soli",
+          "florianopolis-magnet"
+        ]
+      },
+      {
+        "code": "philippines",
+        "name_ru": "Филиппины",
+        "flag_emoji": "🇵🇭",
+        "fit_score": 55,
+        "visa_free_days": 30,
+        "visa_pattern": "безвиз 30 дней + продления до 36 мес суммарно",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "700-1200",
+        "birth_right": false,
+        "headline": "Безвиз с продлениями до 36 месяцев + новая DN-виза",
+        "why": [
+          "продление безвиза до 36 месяцев суммарно через BI",
+          "DN-виза запущена 03.2025: $2000/мес, 0% на иностранный доход, $20-40",
+          "дёшево: Себу/Думагете $700-1200/мес, дружелюбное население"
+        ],
+        "risk": "жёсткий банкинг — PNB/BDO/Grab блокируют счета россиян (даже действующие) по FATF; депозит SRRV только wire-переводом",
+        "tags": [
+          "asia",
+          "dn-new",
+          "srrv",
+          "banking-crackdown",
+          "user-lives-here"
+        ]
+      },
+      {
+        "code": "montenegro",
+        "name_ru": "Черногория",
+        "flag_emoji": "🇲🇪",
+        "fit_score": 52,
+        "visa_free_days": 30,
+        "visa_pattern": "безвиз 30 дней (до 09.2026)",
+        "mir_works": false,
+        "unionpay_works": false,
+        "budget_month_usd": "500-700",
+        "birth_right": false,
+        "headline": "Уходящий поезд: безвиз отменят к сентябрю 2026",
+        "why": [
+          "ВНЖ через бизнес (уставной капитал €1) или цифровой кочевник (€1350/мес)",
+          "низкий НДФЛ 9-15%, использует EUR без членства в ЕС",
+          "россияне — №1 покупатели недвижимости (€177 млн в 2025)"
+        ],
+        "risk": "безвиз для россиян отменяется к 09.2026 ради EU-интеграции; с 08.05.2026 новые AML-требования к сделкам с недвижимостью от €10k",
+        "tags": [
+          "europe",
+          "visa-soon",
+          "eu-integration",
+          "real-estate"
+        ]
+      },
+      {
+        "code": "argentina",
+        "name_ru": "Аргентина",
+        "flag_emoji": "🇦🇷",
+        "fit_score": 50,
+        "visa_free_days": 90,
+        "visa_pattern": "безвиз 90/180; гражданство за 2 года безвыездно",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "600-1000",
+        "birth_right": true,
+        "headline": "Самый короткий путь к гражданству — 2 года",
+        "why": [
+          "гражданство после 2 лет проживания (самый короткий срок)",
+          "после отмены cepo (04.2025) единый курс ARS/USD, иностранные Visa/MC по рынку",
+          "относительно дёшево: бюджет одиночки $600-1000/мес в Буэнос-Айресе"
+        ],
+        "risk": "реформа Милея (DNU 366/2025): родовой туризм закрыт, гражданство теперь требует 2 года БЕЗ единого дня за границей, обязательная страховка",
+        "tags": [
+          "latam",
+          "rentista",
+          "milei-reforms",
+          "fast-citizenship"
+        ]
+      },
+      {
+        "code": "bali",
+        "name_ru": "Бали (Индонезия)",
+        "flag_emoji": "🇮🇩",
+        "fit_score": 48,
+        "visa_free_days": 60,
+        "visa_pattern": "VOA $35 (30+30=60) / C1 до 180; E33G KITAS",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "1000-2500",
+        "birth_right": false,
+        "headline": "Цифровой кочевник-хаб с KITAS, но жёсткий контроль",
+        "why": [
+          "E33G Digital Nomad KITAS: 1+1 год, доход $60k/год, пошлина ~$810",
+          "VOA $35 (до 60 дней) или C1 через агента (до 180 дней)",
+          "местные права, медстраховка и счёт в банке с KITAS"
+        ],
+        "risk": "депортации за работу на тур.визе (78 человек в 2025); обсуждается требование банк. выписок при въезде, нестабильный UnionPay",
+        "tags": [
+          "asia",
+          "digital-nomad",
+          "kitas",
+          "deportation-risk"
+        ]
+      },
+      {
+        "code": "panama",
+        "name_ru": "Панама",
+        "flag_emoji": "🇵🇦",
+        "fit_score": 46,
+        "visa_free_days": 90,
+        "visa_pattern": "безвиз 90 дней ($500 на руках); Qualified Investor",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "1500-2500",
+        "birth_right": true,
+        "headline": "Доллар как валюта и налог 0% на иностранный доход",
+        "why": [
+          "доллар США = нац. валюта, обменных рисков нет",
+          "территориальные налоги: иностранный доход 0%",
+          "Qualified Investor даёт СРАЗУ ПМЖ, Pensionado от $1000/мес пенсии"
+        ],
+        "risk": "Friendly Nations Visa россиянам недоступна (миф гайдов); порог Qualified Investor $300k→$500k с 15.10.2026; банки крайне сложны под комплаенсом США",
+        "tags": [
+          "latam",
+          "qualified-investor",
+          "pensionado",
+          "dollar-currency",
+          "territorial-tax"
+        ]
+      },
+      {
+        "code": "cyprus",
+        "name_ru": "Кипр",
+        "flag_emoji": "🇨🇾",
+        "fit_score": 45,
+        "visa_free_days": 90,
+        "visa_pattern": "виза обязательна (нац./шенген/болгарская)",
+        "mir_works": false,
+        "unionpay_works": false,
+        "budget_month_usd": "1000-1200",
+        "birth_right": false,
+        "headline": "Fast Track ПМЖ за €300k и 17 лет без налогов",
+        "why": [
+          "Fast Track ПМЖ за €300k недвижимости + доход €50k/год — за 9 месяцев",
+          "non-dom режим: 17 лет освобождения от налогов на иностранный доход",
+          "крупная русскоязычная диаспора в Лимассоле, дружественное отношение в ЕС"
+        ],
+        "risk": "с 10.2025 обязательна биометрия через BLS International; с 06.2025 банки ужесточили KYC, доказать происхождение средств из РФ сложно",
+        "tags": [
+          "europe",
+          "fast-track-pr",
+          "non-dom",
+          "tax-friendly"
+        ]
+      },
+      {
+        "code": "uae",
+        "name_ru": "ОАЭ",
+        "flag_emoji": "🇦🇪",
+        "fit_score": 44,
+        "visa_free_days": 90,
+        "visa_pattern": "безвиз 90 дней; Golden Visa 10 лет",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "2000-4000",
+        "birth_right": false,
+        "headline": "Подоходный налог 0% и Golden Visa на 10 лет",
+        "why": [
+          "подоходный налог 0%, безвиз 90 дней",
+          "Golden Visa на 10 лет ($545k недвижимости) без требования проживания",
+          "фриланс-виза Free Zone — право работать на иностранных клиентов"
+        ],
+        "risk": "в 2025-26 закрыто до 30% счетов россиян, с 01.01.2026 CRS-автообмен с ФНС РФ; Дубай дорогой ($2-4k/мес минимум)",
+        "tags": [
+          "middle-east",
+          "golden-visa",
+          "tax-free",
+          "banking-crackdown"
+        ]
+      },
+      {
+        "code": "mexico",
+        "name_ru": "Мексика",
+        "flag_emoji": "🇲🇽",
+        "fit_score": 43,
+        "visa_free_days": 0,
+        "visa_pattern": "SAE (1 въезд, до 180 дн) ИЛИ виза",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "700-900",
+        "birth_right": true,
+        "headline": "Jus soli, но без визы США въезд закрыт",
+        "why": [
+          "роды дают гражданство ребёнку (jus soli)",
+          "Гвадалахара — tech-хаб, Плайя-дель-Кармен — русская диаспора",
+          "относительно доступно: бюджет $700-900/мес без аренды"
+        ],
+        "risk": "без визы США/EU/Канады/Японии нужна виза или SAE; ВНЖ требует дохода $4400/мес; счёт без CURP (т.е. без ВНЖ) почти невозможен",
+        "tags": [
+          "latam",
+          "expensive-residency",
+          "sae-required",
+          "narco-zones"
+        ]
+      },
+      {
+        "code": "israel",
+        "name_ru": "Израиль",
+        "flag_emoji": "🇮🇱",
+        "fit_score": 42,
+        "visa_free_days": 90,
+        "visa_pattern": "безвиз 90/180 + ETA-IL; Алия — главный путь",
+        "mir_works": false,
+        "unionpay_works": false,
+        "budget_month_usd": "2500-5000",
+        "birth_right": false,
+        "headline": "Алия даёт гражданство автоматически + льготы абсорбции",
+        "why": [
+          "Алия по еврейским корням до 3-го поколения → гражданство автоматически",
+          "льготы абсорбции: корзина денег, бесплатная медицина 12 мес, ульпан",
+          "8000+ репатриантов из РФ в 2025 (рекорд)"
+        ],
+        "risk": "ETA-IL обязательно с 01.2025, строгий пограничный контроль и рост отказов туристам без алии; Тель-Авив — один из дороже городов мира",
+        "tags": [
+          "middle-east",
+          "aliyah",
+          "repatriation",
+          "strict-border"
+        ]
+      },
+      {
+        "code": "turkey",
+        "name_ru": "Турция",
+        "flag_emoji": "🇹🇷",
+        "fit_score": 41,
+        "visa_free_days": 60,
+        "visa_pattern": "безвиз 60 дней (макс 90/180); икамет",
+        "mir_works": false,
+        "unionpay_works": true,
+        "budget_month_usd": "1000-1200",
+        "birth_right": false,
+        "headline": "Гражданство за недвижимость $400k, но икамет вырос в 15 раз",
+        "why": [
+          "безвиз 60 дней, крупные русскоязычные диаспоры (Стамбул, Анталия, Алания)",
+          "гражданство за недвижимость $400k за 4-6 месяцев",
+          "ВНЖ через недвижимость от ~$50k без районных ограничений"
+        ],
+        "risk": "с 05.2026 туристический икамет вырос ~в 15 раз ($44→$631/год), 1169 микрорайонов с запретом первичной выдачи, отток россиян -15%",
+        "tags": [
+          "asia",
+          "ikamet",
+          "hyperinflation-residency",
+          "declining"
+        ]
+      }
+    ]
+  },
+  "calc_example": {
+    "ok": true,
+    "price_usd": 142,
+    "deep_link": "https://aviasales.ru/search/MOW2007TBS1?marker=TP_MARKER",
+    "promo": "RELOCATE5",
+    "currency": "USD"
+  }
+}
