@@ -4,24 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <meta name="color-scheme" content="dark light" />
-  <title>Где Жить — Карта доступа</title>
+  <title>Где Жить — подбор страны</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
   <meta name="theme-color" content="#0a0c10" />
 
   <!-- Telegram Web App SDK — MUST load before app scripts (injects --tg-theme-* vars) -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Fonts: Inter (prose) + Roboto Mono (passport numbers) -->
+  <!-- Fonts: Inter (prose) + Roboto Mono (passport numbers) ONLY -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://flagcdn.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet" />
 
-  <!-- Map library (jsVectorMap v1.7.0, MIT) — vendored locally (no CDN MITM risk). Map is progressive enhancement. -->
-  <link rel="stylesheet" href="./vendor/jsvectormap.min.css" />
-
   <link rel="stylesheet" href="./style.css" />
-  <link rel="stylesheet" href="./map.css" />
 </head>
 <body>
   <div id="app-shell">
@@ -30,14 +26,10 @@
 
   <noscript>
     <div style="padding:24px;font-family:sans-serif;color:#f3ecd9;background:#0a0c10;">
-      Включите JavaScript, чтобы открыть Карту доступа. Откройте приложение внутри Telegram.
+      Включите JavaScript, чтобы открыть подбор страны. Откройте приложение внутри Telegram.
     </div>
   </noscript>
 
-  <!-- jsVectorMap core + world map, vendored (UMD globals; classic scripts run before the deferred module) -->
-  <script src="./vendor/jsvectormap.min.js"></script>
-  <script src="./vendor/world-merc.js"></script>
-
-  <script type="module" src="./app-map.js"></script>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
