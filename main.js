@@ -1,13 +1,13 @@
 /* ════════════════════════════════════════════════════════════════════════
    ГДЕ ЖИТЬ — Telegram Mini App · entry point
    ────────────────────────────────────────────────────────────────────────
-   ▶ PHASE 2 SWITCH — when Session 1 publishes RAILWAY_URL in
-     gde-zhit-funnel/CONTRACT.md, replace the line below with that URL:
-        export const BASE_URL = 'https://<railway>.up.railway.app';
-     Leaving it as 'MOCK' keeps the app running on bundled fixtures
-     (./mock/mock_app_data.json) — fully demo-able with no backend.
+   ▶ PHASE 2 — CONNECTED to the live Railway backend (2026-06-21, per
+     gde-zhit-funnel/CONTRACT.md "DEPLOYED:"). Inside Telegram the app now
+     pulls the real подбор by initData. To run on bundled fixtures instead
+     (offline demo / browser preview), set this back to 'MOCK' OR open the
+     URL with ?mock — e.g.  …/gde-zhit-app/?mock#result
    ════════════════════════════════════════════════════════════════════════ */
-export const BASE_URL = 'MOCK';
+export const BASE_URL = 'https://gde-zhit-funnel-production.up.railway.app';
 
 const _params = new URLSearchParams(location.search);
 export const MOCK = BASE_URL === 'MOCK' || _params.has('mock');
