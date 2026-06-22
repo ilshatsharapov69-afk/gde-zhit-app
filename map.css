@@ -1,80 +1,78 @@
 /* ============================================================================
-   Где Жить — мини-апка «Карта доступа» (лид-магнит).
+   Где Жить — мини-апка «Карта доступа» V1 (лид-магнит).
    Дизайн-язык «Паспорт» (наследует токены из style.css: --gzh-*, --s*, --safe-*).
-   Один экран: задача → карта → тизер страны → переход в бота. Без таб-бара.
+   Один фильтр-задача (picker) → крупная карта → список стран → тизер. Без таб-бара.
    ========================================================================== */
 
 :root {
   /* --- Палитра карты (паспортная гамма; 🟢 = золото, не зелёный) --- */
-  --gzh-map-water:    #070a11;                 /* вода/фон карты = самый тёмный ink */
-  --gzh-map-land:     #1a2233;                 /* неактивная суша */
-  --gzh-map-stroke:   rgba(255,255,255,.07);   /* границы стран */
-  --gzh-map-active:   #e8b04b;                  /* страна кластера (доступ есть) */
-  --gzh-map-selected: #f0c878;                  /* выбранная (тапнутая) */
-  --gzh-map-hover:    #2a3550;                  /* hover (десктоп) */
+  --gzh-map-water:    #070a11;
+  --gzh-map-land:     #1a2233;
+  --gzh-map-stroke:   rgba(255,255,255,.07);
+  --gzh-map-active:   #e8b04b;
+  --gzh-map-selected: #f0c878;
+  --gzh-map-hover:    #2a3550;
 
   /* --- Bottom sheet --- */
   --gzh-sheet-bg:     #0f1622;
   --gzh-scrim:        rgba(4,6,10,.66);
   --gzh-sheet-radius: 20px;
 
-  /* высота нижней sticky-CTA (вместо таб-бара) */
   --cta-h: 84px;
 }
 
-/* На экране карты таб-бара нет — нижний отступ под sticky-CTA */
 #app {
   padding-bottom: calc(var(--cta-h) + var(--safe-bottom) + var(--s4));
 }
 
-/* ----------------------------------------------------------------- ШАПКА */
-.map-head { margin: var(--s2) 0 var(--s3); }
-
-/* --------------------------------------------------- РЯД ЧИПОВ-ЗАДАЧ */
-.task-chips {
-  display: flex; gap: var(--s2);
-  overflow-x: auto; overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
-  margin: 0 calc(var(--s4) * -1) var(--s4);
-  padding: 2px var(--s4) var(--s3);
-  scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent 100%);
-          mask-image: linear-gradient(90deg, #000 90%, transparent 100%);
+/* -------------------------------------------------------- БРЕНД-БАР (шапка) */
+.brand-bar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 calc(var(--s4) * -1) var(--s3);
+  padding: 10px var(--s4) 10px;
+  background: rgba(10,12,16,.86);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--gzh-hairline);
 }
-.task-chips::-webkit-scrollbar { display: none; }
-
-.task-chip {
-  flex: 0 0 auto; scroll-snap-align: start;
-  display: inline-flex; align-items: center; gap: 7px;
-  height: 44px; padding: 0 14px;
-  border-radius: var(--gzh-radius-chip);
-  background: var(--gzh-panel);
-  border: 1px solid var(--gzh-hairline-soft);
-  color: var(--gzh-subtext);
-  font-size: 13px; font-weight: 600; letter-spacing: -.1px;
-  white-space: nowrap;
-  transition: background .2s, border-color .2s, color .2s, transform .12s var(--ease-spring);
+.brand-avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex: 0 0 auto;
+  object-fit: cover; background: #11192a;
+  border: 1px solid rgba(232,176,75,.55);
+  box-shadow: 0 0 0 2px rgba(232,176,75,.12);
 }
-.task-chip:active { transform: scale(.96); }
-.task-chip .tc-emoji { font-size: 15px; line-height: 1; }
-
-/* money/HIGH ранговый маркер: тихая золотая точка */
-.task-chip[data-tier="high"]::before {
-  content: ""; width: 5px; height: 5px; border-radius: 50%;
-  background: var(--gzh-accent); margin-right: 1px; flex: 0 0 auto;
-  box-shadow: 0 0 0 2px rgba(232,176,75,.18);
+.brand-id { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.brand-name {
+  font-size: 16px; font-weight: 800; letter-spacing: -.2px; color: var(--gzh-accent);
 }
+.brand-tag { font-size: 11px; font-weight: 600; color: var(--gzh-subtext); }
 
-/* активный чип = золотая фольга (единый язык «выбрано = золото») */
-.task-chip.is-active {
-  background: linear-gradient(135deg, var(--gzh-accent-2), var(--gzh-accent));
-  border-color: transparent; color: #1a1206; font-weight: 700;
-  box-shadow: 0 4px 14px rgba(232,176,75,.22);
+/* ---------------------------------------------------- АКТИВНАЯ ЗАДАЧА (фильтр) */
+.task-bar {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  min-height: 52px; padding: 0 14px; margin: 0 0 var(--s3);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(232,176,75,.12), rgba(232,176,75,.05));
+  border: 1px solid rgba(232,176,75,.38);
+  color: var(--gzh-text);
+  text-align: left;
+  transition: transform .12s var(--ease-spring), border-color .2s;
 }
-.task-chip.is-active[data-tier="high"]::before { background: #1a1206; box-shadow: none; }
+.task-bar:active { transform: scale(.985); }
+.task-bar .tb-emoji { font-size: 20px; flex: 0 0 auto; }
+.task-bar .tb-label {
+  font-size: 15px; font-weight: 800; letter-spacing: -.2px; flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;   /* бар не прыгает в 2 строки */
+}
+.task-bar .tb-change {
+  flex: 0 0 auto; display: inline-flex; align-items: center;
+  font-size: 12.5px; font-weight: 800; color: var(--gzh-accent);
+  background: rgba(232,176,75,.14); border: 1px solid rgba(232,176,75,.45);
+  padding: 6px 11px; border-radius: 9px;
+}
+.task-bar .tb-caret { font-size: 11px; }
 
-/* ------------------------------------------------------------- КАРТА */
+/* ------------------------------------------------------------- КАРТА (крупная) */
 .map-stage {
   position: relative;
   margin: 0 calc(var(--s4) * -1);
@@ -85,28 +83,37 @@
   animation: cardEnter .5s var(--ease-spring) both;
 }
 #map-canvas {
-  width: 100%; height: 296px;            /* фикс. высота обязательна (иначе 0px); срезан мёртвый океан */
-  touch-action: pan-y;                   /* пропускать верт. свайп TG (см. рекон) */
+  width: 100%; height: 340px;            /* крупная интерактивная карта */
 }
-#map-canvas svg { touch-action: pan-y; background: transparent; }
+#map-canvas svg { background: transparent; }
 
-/* счётчик стран поверх карты (правый нижний угол) */
-.map-count {
-  position: absolute; right: 10px; bottom: 9px; z-index: 3;
-  font-family: var(--gzh-mono); font-size: 10.5px; font-weight: 700;
-  letter-spacing: .04em; color: var(--gzh-num);
-  background: rgba(7,10,17,.72); border: 1px solid rgba(232,176,75,.28);
-  padding: 3px 8px; border-radius: 7px; pointer-events: none;
+/* зум-кнопки jsVectorMap → паспортный стиль */
+.jvm-zoom-btn {
+  width: 40px; height: 40px; line-height: 38px;
+  background: rgba(7,10,17,.82); color: var(--gzh-accent);
+  border: 1px solid rgba(232,176,75,.34); border-radius: 9px;
+  font-size: 22px; font-weight: 700; left: 10px; box-shadow: none;
 }
+.jvm-zoom-btn.jvm-zoomin { top: 10px; }
+.jvm-zoom-btn.jvm-zoomout { top: 58px; }   /* ≥8px зазор при 40px кнопках */
+
+/* tooltip имени страны */
+.jvm-tooltip {
+  background: #11192a; border: 1px solid rgba(232,176,75,.4);
+  color: var(--gzh-text); font-family: var(--gzh-mono);
+  font-size: 12px; font-weight: 700; border-radius: 8px; padding: 5px 9px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.5);
+}
+
 /* подсказка-жест (гаснет после первого тапа) */
 .map-hint {
-  position: absolute; left: 10px; bottom: 9px; z-index: 3;
-  font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-  color: var(--gzh-faint); background: rgba(7,10,17,.55);
-  padding: 3px 8px; border-radius: 7px; pointer-events: none;
-  transition: opacity .3s;
+  position: absolute; left: 50%; transform: translateX(-50%); bottom: 9px; z-index: 3;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .03em; text-align: center;
+  color: var(--gzh-accent-2); background: rgba(7,10,17,.72);
+  border: 1px solid rgba(232,176,75,.24);
+  padding: 4px 11px; border-radius: 8px; pointer-events: none;
+  transition: opacity .3s; max-width: 92%;
 }
-/* фолбэк, если либа карты не загрузилась */
 .map-fallback {
   display: flex; align-items: center; justify-content: center; text-align: center;
   height: 100%; padding: var(--s5); color: var(--gzh-subtext); font-size: 13px; line-height: 1.5;
@@ -125,40 +132,43 @@
 .map-global[hidden] { display: none; }
 .map-global .mg-go { margin-left: auto; flex: 0 0 auto; color: var(--gzh-accent); font-weight: 800; }
 
-/* строка актуальности/дисклеймер */
 .map-disclaimer {
   margin: var(--s3) 0 0; font-size: 11px; line-height: 1.45; color: var(--gzh-faint);
   text-align: center;
 }
 .map-disclaimer b { color: var(--gzh-subtext); font-weight: 700; }
 
-/* ----------------------------------------------- РЯД ЧИПОВ-СТРАН (под картой) */
-.country-strip-wrap { margin-top: var(--s4); }
-.country-strip-wrap .kicker { display: block; margin-bottom: var(--s2); }
-.country-strip {
-  display: flex; gap: var(--s2);
-  overflow-x: auto; overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  margin: 0 calc(var(--s4) * -1);
-  padding: 2px var(--s4) var(--s2);
-  scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent 100%);
-          mask-image: linear-gradient(90deg, #000 92%, transparent 100%);
-}
-.country-strip::-webkit-scrollbar { display: none; }
-.country-pill {
-  flex: 0 0 auto;
-  display: inline-flex; align-items: center; gap: 7px;
-  height: 38px; padding: 0 12px 0 8px;
-  border-radius: var(--gzh-radius-chip);
+/* -------------------------------------------------- ВЕРТИКАЛЬНЫЙ СПИСОК СТРАН */
+.country-list-wrap { margin-top: var(--s4); }
+.country-list-wrap .kicker { display: block; margin-bottom: var(--s2); }
+.country-list { display: grid; gap: var(--s2); }
+
+.country-card {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  min-height: 64px; padding: 10px 12px;
+  border-radius: 13px; text-align: left;
   background: var(--gzh-plate-bg);
   border: 1px solid var(--gzh-hairline);
-  color: var(--gzh-text); font-size: 13px; font-weight: 600;
-  white-space: nowrap;
-  transition: transform .12s var(--ease-spring), border-color .2s;
+  color: var(--gzh-text);
+  transition: transform .12s var(--ease-spring), border-color .2s, background .2s;
 }
-.country-pill:active { transform: scale(.95); }
-.country-pill .flag-img { width: 24px; height: 17px; }
+.country-card:active { transform: scale(.985); border-color: rgba(232,176,75,.4); }
+.country-card .flag-img { width: 34px; height: 24px; flex: 0 0 auto; border-radius: 3px; }
+.country-card .cc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.country-card .cc-top { display: flex; align-items: center; gap: 8px; }
+.country-card .cc-name { font-size: 16px; font-weight: 700; letter-spacing: -.2px; }
+.country-card .cc-count {
+  flex: 0 0 auto; margin-left: auto;
+  font-family: var(--gzh-mono); font-size: 10.5px; font-weight: 700; letter-spacing: .02em;
+  color: var(--gzh-num); background: rgba(232,176,75,.1);
+  border: 1px solid rgba(232,176,75,.26); padding: 2px 7px; border-radius: 6px;
+}
+.country-card .cc-svc {
+  font-size: 12.5px; line-height: 1.35; color: var(--gzh-subtext);
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.country-card .cc-go { flex: 0 0 auto; color: var(--gzh-faint); font-size: 22px; font-weight: 400; }
 
 /* ============================================================ STICKY CTA */
 .sticky-cta {
@@ -184,7 +194,7 @@
 }
 .sheet-scrim[hidden] { display: none; }
 
-.country-sheet {
+.app-sheet {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
   max-width: 520px; margin: 0 auto;
   background: var(--gzh-gold-wash), var(--gzh-sheet-bg);
@@ -192,38 +202,75 @@
   border-radius: var(--gzh-sheet-radius) var(--gzh-sheet-radius) 0 0;
   box-shadow: 0 -18px 46px rgba(0,0,0,.6), var(--gzh-gold-inset);
   padding: var(--s3) var(--s4) calc(var(--safe-bottom) + var(--s5));
-  max-height: 82vh; overflow-y: auto;
+  max-height: 86vh; overflow-y: auto;
   touch-action: pan-y; overscroll-behavior: contain;
   animation: sheetUp .32s var(--ease-spring);
 }
-.country-sheet[hidden] { display: none; }
-.country-sheet.closing { animation: sheetDown .24s var(--ease-spring) forwards; }
+.app-sheet[hidden] { display: none; }
+.app-sheet.closing { animation: sheetDown .24s var(--ease-spring) forwards; }
 
 .sheet-grab {
   width: 40px; height: 4px; border-radius: 3px; margin: 2px auto var(--s3);
   background: var(--gzh-hairline);
 }
-.sheet-head { display: flex; align-items: flex-start; gap: var(--s3); }
-.sheet-head .flag-img { width: 38px; height: 27px; }
-.sheet-id { flex: 1; min-width: 0; }
-.sheet-name { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.3px; color: var(--gzh-text); }
-.sheet-cluster { display: block; margin-top: 3px; font-size: 12px; color: var(--gzh-subtext); }
 .sheet-close {
   flex: 0 0 auto; width: 32px; height: 32px; border-radius: 50%;
   background: var(--gzh-panel); border: 1px solid var(--gzh-hairline-soft);
   color: var(--gzh-subtext); font-size: 14px; line-height: 1;
 }
 
-.sheet-hook {
-  margin: var(--s3) 0 0; font-size: 13px; font-weight: 700; color: var(--gzh-accent-2);
-  display: flex; align-items: center; gap: 7px;
+/* ---- TASK PICKER (выбор задачи) ---- */
+.picker-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
+.picker-head h3 { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -.3px; color: var(--gzh-text); }
+.picker-group { margin-top: var(--s3); display: grid; gap: 6px; }
+.picker-kicker {
+  display: block; margin: var(--s2) 0 2px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--gzh-faint);
 }
-.sheet-hook::before { content: "◆"; font-size: 9px; opacity: .8; }
+.task-row {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  min-height: 56px; padding: 8px 12px;
+  border-radius: 12px; text-align: left;
+  background: var(--gzh-panel); border: 1px solid var(--gzh-hairline-soft);
+  color: var(--gzh-text);
+  transition: transform .1s var(--ease-spring), border-color .2s, background .2s;
+}
+.task-row:active { transform: scale(.985); }
+.task-row.is-active {
+  background: linear-gradient(135deg, rgba(232,176,75,.18), rgba(232,176,75,.07));
+  border-color: rgba(232,176,75,.5);
+}
+.task-row .tr-emoji { font-size: 21px; flex: 0 0 auto; width: 26px; text-align: center; }
+.task-row .tr-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.task-row .tr-label { font-size: 15px; font-weight: 700; letter-spacing: -.2px; }
+.task-row .tr-blurb {
+  font-size: 11.5px; color: var(--gzh-faint); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.task-row .tr-dot {
+  flex: 0 0 auto; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gzh-accent); box-shadow: 0 0 0 2px rgba(232,176,75,.18);
+}
+.task-row .tr-check { flex: 0 0 auto; color: var(--gzh-accent); font-weight: 800; font-size: 15px; }
+.task-row.is-active .tr-dot { display: none; }   /* на активной строке ✓ заменяет точку (не дублируем) */
+
+/* ---- COUNTRY TEASER (тизер страны) ---- */
+.sheet-head { display: flex; align-items: flex-start; gap: var(--s3); }
+.sheet-head .flag-img { width: 38px; height: 27px; border-radius: 3px; }
+.sheet-id { flex: 1; min-width: 0; }
+.sheet-name { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.3px; color: var(--gzh-text); }
+.sheet-cluster { display: block; margin-top: 3px; font-size: 12px; color: var(--gzh-subtext); }
+
+.sheet-count {
+  display: inline-block; margin: var(--s3) 0 0;
+  font-family: var(--gzh-mono); font-size: 11px; font-weight: 700; letter-spacing: .03em;
+  color: var(--gzh-num); background: rgba(232,176,75,.1);
+  border: 1px solid rgba(232,176,75,.28); padding: 3px 9px; border-radius: 7px;
+}
 
 .sheet-bullets { display: grid; gap: var(--s2); margin: var(--s3) 0 0; }
-.sheet-bullets li {
-  font-size: 14px; line-height: 1.4; color: var(--gzh-text); display: flex; gap: 9px;
-}
+.sheet-bullets li { font-size: 14px; line-height: 1.4; color: var(--gzh-text); display: flex; gap: 9px; }
 .sheet-bullets li::before { content: "✓"; color: var(--gzh-accent); font-weight: 800; flex: 0 0 auto; }
 
 .sheet-fact {
@@ -233,17 +280,15 @@
   font-family: var(--gzh-mono); font-size: 13px; line-height: 1.5; color: var(--gzh-text);
 }
 
-/* 🔒 «обрыв»/занавес: верхняя граница-разделитель + золотой замок, текст остаётся тусклым */
 .sheet-locked {
   margin: var(--s4) 0; padding-top: var(--s4);
   border-top: 1px dashed var(--gzh-hairline);
   display: flex; gap: 9px; align-items: flex-start;
-  font-size: 13px; line-height: 1.45; color: var(--gzh-faint);
+  font-size: 13px; line-height: 1.45; color: var(--gzh-subtext);   /* ключевая строка-интрига, не disabled */
 }
 .sheet-locked .lk-ico { flex: 0 0 auto; font-size: 16px; color: var(--gzh-accent); opacity: 1; }
 .sheet-cta { margin-top: var(--s2); }
 
-/* grey-country (нет прямого доступа) вариант листа */
 .sheet-empty-note {
   margin: var(--s4) 0; padding: var(--s4);
   background: var(--gzh-panel); border: 1px solid var(--gzh-hairline-soft);
@@ -253,11 +298,21 @@
 .sheet-empty-note .ne-ico { flex: 0 0 auto; opacity: .8; }
 .sheet-actions { display: grid; gap: var(--s2); margin-top: var(--s2); }
 
+/* ============================================================ SKELETON (до данных) */
+.map-skel { width: 100%; height: 100%; background: #0c1320; animation: skelPulse 1.2s ease-in-out infinite; }
+.country-card.skel { pointer-events: none; border-color: var(--gzh-hairline); }
+.skel-flag { width: 34px; height: 24px; border-radius: 3px; background: #1a2233; flex: 0 0 auto; }
+.country-card.skel .cc-body { gap: 6px; }
+.skel-line { height: 11px; border-radius: 4px; background: #1a2233; animation: skelPulse 1.2s ease-in-out infinite; }
+.skel-line.w60 { width: 60%; }
+.skel-line.w90 { width: 90%; }
+
 /* ============================================================ KEYFRAMES */
 @keyframes scrimIn  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes sheetUp   { from { transform: translateY(100%); } to { transform: none; } }
 @keyframes sheetDown { from { transform: none; } to { transform: translateY(100%); } }
+@keyframes skelPulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .map-stage, .country-sheet, .sheet-scrim { animation: none !important; }
+  .map-stage, .app-sheet, .sheet-scrim, .map-skel, .skel-line { animation: none !important; }
 }

@@ -1,16 +1,18 @@
 /* ════════════════════════════════════════════════════════════════════════
-   ГДЕ ЖИТЬ — мини-апка «Карта доступа» (лид-магнит воронки).
-   Один экран: выбери ЗАДАЧУ (кластер) → карта мира подсвечивает страны с
-   доступом → тап страны = тизер (полупольза + 🔒) → переход в бота t-<cluster>-<ISO>.
+   ГДЕ ЖИТЬ — мини-апка «Карта доступа» (лид-магнит воронки). V1.
+   Один фильтр-ЗАДАЧА (bottom-sheet picker, открыт при входе) → крупная карта
+   мира подсвечивает страны золотом (зум + имя по тапу) → вертикальный список
+   карточек стран («что доступно» из whitelist-софтенера) → тап = тизер →
+   переход в бота t-<cluster>-<ISO>. Страна = drill-down, НЕ co-фильтр.
    Самодостаточна: данные из статического map_data.json, бэкенд НЕ нужен.
-   Карта (jsVectorMap) = прогрессивное улучшение: если не загрузилась — чипы
-   стран + карточки + CTA всё равно работают.
    Контракт: MASTER-SPEC-v2 §3 (cluster-ключи, ISO-2, deep-link t-<cluster>-<ISO>).
    ════════════════════════════════════════════════════════════════════════ */
 
-const BOT_USERNAME     = 'gde_zhit_YT_bot';   // @gde_zhit_YT_bot (Сессия 1)
-const DEFAULT_CLUSTER  = 'birth';              // 1-й чип (money-headline) → активен+виден без скролла, карта горит по Латам/Европе
-const FRESHNESS        = '06.2026';
+const BOT_USERNAME    = 'gde_zhit_YT_bot';   // @gde_zhit_YT_bot (Сессия 1)
+const DEFAULT_CLUSTER = 'birth';             // 1-я денежная задача (виден сразу при закрытии picker'а)
+const FRESHNESS       = '06.2026';
+const BRAND           = 'Где Жить';
+const TAGLINE         = 'Что реально оформить за рубежом';
 
 /* ───────────────────────────────────────────────── Telegram bridge ────── */
 const _realTg = window.Telegram && window.Telegram.WebApp;
@@ -85,7 +87,7 @@ function applyTheme() {
 /* ───────────────────────────────────────────────── deep-link ──────────── */
 const VALID = /^[A-Za-z0-9_-]{1,64}$/;
 function payload(cluster, iso) {
-  const c = VALID.test(`t-${cluster}`) ? cluster : 'unknown';   // защита fallback-ветки
+  const c = VALID.test(`t-${cluster}`) ? cluster : DEFAULT_CLUSTER;   // защита fallback-ветки (валидный ключ §3.1)
   return iso && VALID.test(`t-${c}-${iso}`) ? `t-${c}-${iso}` : `t-${c}`;
 }
 function botLink(cluster, iso) { return `https://t.me/${BOT_USERNAME}?start=${payload(cluster, iso)}`; }
@@ -108,45 +110,59 @@ let DATA = null;
 let activeCluster = DEFAULT_CLUSTER;
 let selectedISO = null;
 let map = null;
-let prevActive = new Set();
-let hintShown = true;
-let firstPaint = true;   // первый selectCluster из boot() не должен скроллить чипы (иначе 1-й money-чип уезжает)
+let currentSheet = null;   // открытый лист (#task-sheet | #country-sheet)
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const flag = (iso, w = 40) => `https://flagcdn.com/w${w}/${iso.toLowerCase()}.png`;
 
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+const variantsLabel = (n) => `${n} ${plural(n, 'вариант', 'варианта', 'вариантов')}`;
+
+// строка услуг карточки: ведём НАИБОЛЕЕ УНИКАЛЬНОЙ для страны фразой (реже встречается в кластере),
+// иначе Бразилия/Аргентина выглядят близнецами. freq считается в renderCountryList. Фолбэк → 1-й буллет.
+function cardServiceLine(cluster, co, freq) {
+  if (co.services && co.services.length) {
+    const s = co.services.slice().sort((a, b) => (freq[a] ?? 99) - (freq[b] ?? 99));
+    return s.slice(0, 2).join(' · ');
+  }
+  const b = cluster.bullets;
+  return b && b.length ? b[0] : '';
+}
+
 /* ───────────────────────────────────────────────── render shell ───────── */
 function renderShell() {
-  const order = DATA.meta.cluster_order;
-  const chips = order.map((cl) => {
-    const c = DATA.clusters[cl];
-    return `<button class="task-chip" role="tab" data-cluster="${esc(cl)}" data-tier="${esc(c.tier)}" aria-selected="false">
-      <span class="tc-emoji">${esc(c.emoji)}</span><span class="tc-label">${esc(c.label)}</span>
-    </button>`;
-  }).join('');
-
   $('#app').innerHTML = `
-    <header class="view-head map-head">
-      <span class="kicker">Где Жить · карта релокации</span>
-      <h1>🗺️ Карта доступа</h1>
-      <p>Выбери задачу — карта покажет, где есть выход. Тапни страну → что доступно.</p>
+    <header class="brand-bar">
+      <img class="brand-avatar" src="./favicon.svg" alt="" />
+      <div class="brand-id">
+        <span class="brand-name">${esc(BRAND)}</span>
+        <span class="brand-tag">${esc(TAGLINE)}</span>
+      </div>
     </header>
 
-    <nav class="task-chips" role="tablist" aria-label="Задачи">${chips}</nav>
+    <button class="task-bar" id="task-bar" aria-haspopup="dialog">
+      <span class="tb-emoji" id="tb-emoji"></span>
+      <span class="tb-label" id="tb-label"></span>
+      <span class="tb-change">сменить&nbsp;<span class="tb-caret">▾</span></span>
+    </button>
 
     <section class="map-stage">
       <div id="map-canvas"></div>
-      <div class="map-count" id="map-count"></div>
-      <div class="map-hint" id="map-hint">Тапни подсвеченную страну</div>
+      <div class="map-hint" id="map-hint">Тапни страну — покажу, что доступно</div>
     </section>
 
     <div class="map-global" id="map-global" hidden></div>
     <p class="map-disclaimer">Данные на <b>${FRESHNESS}</b> · «доступно» = есть рабочий путь, не гарантия.</p>
 
-    <div class="country-strip-wrap">
-      <span class="kicker" id="strip-kicker"></span>
-      <div class="country-strip" id="country-strip"></div>
+    <div class="country-list-wrap">
+      <span class="kicker" id="list-kicker"></span>
+      <div class="country-list" id="country-list"></div>
     </div>
   `;
 
@@ -162,13 +178,10 @@ function renderShell() {
   }
 
   // events
-  $('.task-chips').addEventListener('click', (e) => {
-    const b = e.target.closest('.task-chip'); if (!b) return;
-    haptic('select'); selectCluster(b.dataset.cluster);
-  });
-  $('#country-strip').addEventListener('click', (e) => {
-    const p = e.target.closest('.country-pill'); if (!p) return;
-    haptic('light'); openSheet(p.dataset.iso);
+  $('#task-bar').addEventListener('click', () => { haptic('light'); openTaskPicker(); });
+  $('#country-list').addEventListener('click', (e) => {
+    const card = e.target.closest('.country-card'); if (!card) return;
+    haptic('light'); openCountrySheet(card.dataset.iso);
   });
   $('#map-global').addEventListener('click', () => { haptic('light'); openTgLink(botLink(activeCluster, null)); });
   $('#cta-btn').addEventListener('click', () => { haptic('medium'); openTgLink(botLink(activeCluster, selectedISO)); });
@@ -176,34 +189,30 @@ function renderShell() {
 
 /* ───────────────────────────────────────────────── cluster switch ─────── */
 function selectCluster(cl) {
-  if (!DATA.clusters[cl]) return;
+  if (!DATA || !DATA.clusters[cl]) return;
   activeCluster = cl; selectedISO = null;
-  document.querySelectorAll('.task-chip').forEach((el) => {
-    const on = el.dataset.cluster === cl;
-    el.classList.toggle('is-active', on);
-    el.setAttribute('aria-selected', on ? 'true' : 'false');
-    if (on && !firstPaint) el.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
-  });
-  paintCluster();
-  renderCountryStrip();
+  try { localStorage.setItem('gzh_task', cl); } catch {}   // вернувшемуся юзеру picker не открываем
+  renderActiveTask();
+  rebuildMap();            // перерисовать карту под новый кластер (подсветка + зум-сброс)
+  renderCountryList();
   renderGlobalPlate();
-  updateCount();
 }
 
-function updateCount() {
+function renderActiveTask() {
   const c = DATA.clusters[activeCluster];
-  const n = c.iso_list.length;
-  const el = $('#map-count');
-  // у global-кластеров счётчик «N стран» противоречит «из любой страны» → прячем (смысл несёт плашка)
-  if (c.global) { el.hidden = true; return; }
-  el.hidden = false;
-  el.textContent = `${n} ${plural(n, 'страна', 'страны', 'стран')}`;
+  $('#tb-emoji').textContent = c.emoji;
+  $('#tb-label').textContent = c.label;
 }
-function plural(n, one, few, many) {
-  const m10 = n % 10, m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return one;
-  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
-  return many;
+
+// плейсхолдеры до прихода map_data.json — без пустого тёмного экрана в WebView
+function renderSkeleton() {
+  const te = $('#tb-emoji'); if (te) te.textContent = '⏳';
+  const tl = $('#tb-label'); if (tl) tl.textContent = 'Загрузка…';
+  const lk = $('#list-kicker'); if (lk) lk.textContent = 'Подбираем направления…';
+  const cv = $('#map-canvas'); if (cv) cv.innerHTML = '<div class="map-skel"></div>';
+  const cl = $('#country-list');
+  if (cl) cl.innerHTML = Array.from({ length: 4 }, () =>
+    '<div class="country-card skel"><span class="skel-flag"></span><span class="cc-body"><span class="skel-line w60"></span><span class="skel-line w90"></span></span></div>').join('');
 }
 
 function renderGlobalPlate() {
@@ -211,7 +220,6 @@ function renderGlobalPlate() {
   const el = $('#map-global');
   if (c.global) {
     const n = c.iso_list.length;
-    // согласуем смыслы: «работает отовсюду» + N как «направления», а не «только эти N стран»
     const txt = n ? `🌐 Работает из любой страны · ${n} ${plural(n, 'направление', 'направления', 'направлений')}`
                   : '🌐 Доступно из любой страны';
     el.innerHTML = `<span>${esc(txt)}</span><span class="mg-go">→</span>`;
@@ -219,14 +227,23 @@ function renderGlobalPlate() {
   } else { el.hidden = true; }
 }
 
-function renderCountryStrip() {
+function renderCountryList() {
   const c = DATA.clusters[activeCluster];
-  $('#strip-kicker').textContent = 'Страны доступа · тапни';
-  $('#country-strip').innerHTML = c.iso_list.map((iso) => {
+  const n = c.iso_list.length;
+  $('#list-kicker').textContent = `Что доступно · ${c.emoji} ${c.label} · ${n} ${plural(n, 'страна', 'страны', 'стран')}`;
+  // частота канон-фраз по кластеру → карточка ведёт уникализирующей фразой (различает близкие страны)
+  const freq = {};
+  c.iso_list.forEach((iso) => (c.countries[iso].services || []).forEach((s) => { freq[s] = (freq[s] || 0) + 1; }));
+  $('#country-list').innerHTML = c.iso_list.map((iso) => {
     const co = c.countries[iso];
-    return `<button class="country-pill" data-iso="${esc(iso)}">
+    const badge = co.n >= 2 ? `<span class="cc-count">${variantsLabel(co.n)}</span>` : '';
+    return `<button class="country-card" data-iso="${esc(iso)}">
       <img class="flag-img" src="${flag(iso, 40)}" alt="" loading="lazy">
-      <span>${esc(co.name)}</span>
+      <span class="cc-body">
+        <span class="cc-top"><span class="cc-name">${esc(co.name)}</span>${badge}</span>
+        <span class="cc-svc">${esc(cardServiceLine(c, co, freq))}</span>
+      </span>
+      <span class="cc-go">›</span>
     </button>`;
   }).join('');
 }
@@ -239,41 +256,36 @@ function initMap() {
     if (canvas) canvas.innerHTML = `<div class="map-fallback">Карта не загрузилась — выбирай страну из списка ниже 👇</div>`;
     return;
   }
+  canvas.innerHTML = '';   // destroy() не всегда чистит контейнер → иначе SVG кластеров копятся (union подсветок)
   const active = new Set(DATA.clusters[activeCluster].iso_list);
   const values = {}; active.forEach((iso) => (values[iso] = 'active'));
-  prevActive = active;
   try {
     map = new JVM({
       selector: '#map-canvas',
       map: 'world_merc',
-      zoomButtons: false, zoomOnScroll: false, draggable: false, bindTouchEvents: true,
-      showTooltip: false, backgroundColor: 'transparent',
+      // крупная карта с зумом кнопками/колесом/пинчем. draggable:false — иначе одно-пальцевый drag
+      // по карте панит её и крадёт скролл страницы (scroll-trap); на scale=1 вся суша и так видна.
+      zoomButtons: true, zoomOnScroll: true, draggable: false, bindTouchEvents: true,
+      zoomMax: 4, zoomMin: 1,
+      showTooltip: true, backgroundColor: 'transparent',
       regionStyle: {
         initial: { fill: PAL.land, stroke: PAL.stroke, strokeWidth: 0.5 },
-        hover: { fill: PAL.hover, cursor: 'pointer' },
+        hover: { fillOpacity: 1, fill: PAL.hover, cursor: 'pointer' },
       },
-      series: { regions: [{ attribute: 'fill', scale: { active: PAL.active, off: PAL.land, sel: PAL.selected }, values }] },
-      onRegionClick: (e, code) => { haptic('light'); openSheet(code); },
+      series: { regions: [{ attribute: 'fill', scale: { active: PAL.active, sel: PAL.selected }, values }] },
+      // имя страны по тапу/наведению («подпись при зуме») + статус доступа
+      onRegionTooltipShow: (e, tooltip, code) => {
+        const co = DATA.clusters[activeCluster].countries[code];
+        const nm = co ? co.name : isoName(code);
+        tooltip.text(co ? `${nm} · есть доступ` : nm, false);
+      },
+      onRegionClick: (e, code) => { haptic('light'); openCountrySheet(code); },
     });
   } catch (err) {
     console.warn('[map] init failed', err);
     canvas.innerHTML = `<div class="map-fallback">Карта не загрузилась — выбирай страну из списка ниже 👇</div>`;
     map = null; return;
   }
-  // рекон-фикс: либа ставит touch-action:none на <svg> в рантайме → вернуть pan-y
-  const svg = canvas.querySelector('svg');
-  if (svg) svg.style.touchAction = 'pan-y';
-}
-
-function paintCluster() {
-  if (!map) return;
-  const active = new Set(DATA.clusters[activeCluster].iso_list);
-  const union = new Set([...prevActive, ...active]);
-  const values = {};
-  union.forEach((iso) => (values[iso] = active.has(iso) ? 'active' : 'off'));
-  try { map.series.regions[0].setValues(values); }
-  catch (err) { console.warn('[map] setValues failed → rebuild', err); rebuildMap(); }
-  prevActive = active;
 }
 
 function rebuildMap() {
@@ -289,20 +301,23 @@ function setMapSelected(iso) {
   if (Object.keys(v).length) { try { map.series.regions[0].setValues(v); } catch {} }
 }
 
-/* ───────────────────────────────────────────────── bottom sheet ───────── */
-function ensureSheet() {
-  if (document.querySelector('.country-sheet')) return;
-  const scrim = document.createElement('div');
-  scrim.className = 'sheet-scrim'; scrim.id = 'sheet-scrim'; scrim.hidden = true;
-  const sheet = document.createElement('aside');
-  sheet.className = 'country-sheet'; sheet.id = 'country-sheet'; sheet.hidden = true;
-  sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-modal', 'true');
-  document.body.appendChild(scrim); document.body.appendChild(sheet);
-  scrim.addEventListener('click', closeSheet);
-  // свайп вниз по «ручке»/листу → закрыть
+/* ───────────────────────────────────────────────── sheet infra ────────── */
+function ensureScrim() {
+  let scrim = $('#sheet-scrim');
+  if (!scrim) {
+    scrim = document.createElement('div');
+    scrim.className = 'sheet-scrim'; scrim.id = 'sheet-scrim'; scrim.hidden = true;
+    document.body.appendChild(scrim);
+    scrim.addEventListener('click', closeSheet);
+  }
+  return scrim;
+}
+
+function attachSwipeClose(sheet) {
+  if (sheet._swipeBound) return;
+  sheet._swipeBound = true;
   let y0 = null;
   sheet.addEventListener('touchstart', (e) => { if (sheet.scrollTop <= 0) y0 = e.touches[0].clientY; }, { passive: true });
-  // non-passive: гасим нативный скролл страницы за скримом во время свайпа-закрытия (iOS-фикс)
   sheet.addEventListener('touchmove', (e) => {
     if (y0 == null) return;
     const dy = e.touches[0].clientY - y0;
@@ -318,31 +333,118 @@ function ensureSheet() {
   sheet.addEventListener('touchcancel', () => { sheet.style.transform = ''; y0 = null; });
 }
 
-function openSheet(iso) {
-  ensureSheet();
+function ensureSheet(id) {
+  let sheet = document.getElementById(id);
+  if (!sheet) {
+    sheet = document.createElement('aside');
+    sheet.className = 'app-sheet'; sheet.id = id; sheet.hidden = true;
+    sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-modal', 'true');
+    document.body.appendChild(sheet);
+    attachSwipeClose(sheet);
+  }
+  return sheet;
+}
+
+function showSheet(sheet) {
+  const scrim = ensureScrim();
+  scrim.hidden = false;
+  sheet.hidden = false; sheet.classList.remove('closing'); sheet.style.transform = '';
+  sheet.scrollTop = 0;
+  currentSheet = sheet;
+}
+
+function closeSheet() {
+  const sheet = currentSheet;
+  const scrim = $('#sheet-scrim');
+  if (!sheet || sheet.hidden) return;
+  sheet.classList.add('closing');
+  if (scrim) scrim.hidden = true;
+  const done = () => {
+    sheet.hidden = true; sheet.classList.remove('closing'); sheet.style.transform = '';
+    sheet.removeEventListener('animationend', done); clearTimeout(fallback);
+  };
+  // fallback-таймер: при prefers-reduced-motion animationend не стрельнёт
+  const fallback = setTimeout(done, 320);
+  sheet.addEventListener('animationend', done);
+  if (sheet.id === 'country-sheet' && selectedISO) setMapSelected(null);
+  currentSheet = null;
+}
+
+/* ───────────────────────────────────────────────── task picker ────────── */
+function openTaskPicker() {
+  if (!DATA) return;
+  const sheet = ensureSheet('task-sheet');
+  const order = DATA.meta.cluster_order;
+  const high = order.filter((cl) => DATA.clusters[cl].tier === 'high');
+  const low = order.filter((cl) => DATA.clusters[cl].tier !== 'high');
+
+  const row = (cl) => {
+    const c = DATA.clusters[cl];
+    const on = cl === activeCluster ? ' is-active' : '';
+    const dot = c.tier === 'high' ? '<span class="tr-dot"></span>' : '';
+    return `<button class="task-row${on}" data-cluster="${esc(cl)}">
+      <span class="tr-emoji">${esc(c.emoji)}</span>
+      <span class="tr-text"><span class="tr-label">${esc(c.label)}</span><span class="tr-blurb">${esc(c.blurb)}</span></span>
+      ${dot}${on ? '<span class="tr-check">✓</span>' : ''}
+    </button>`;
+  };
+
+  sheet.innerHTML = `
+    <div class="sheet-grab"></div>
+    <header class="picker-head">
+      <h3>Что вам нужно за рубежом?</h3>
+      <button class="sheet-close" aria-label="Закрыть">✕</button>
+    </header>
+    <div class="picker-group">
+      <span class="picker-kicker">Ради этого чаще всего едут</span>
+      ${high.map(row).join('')}
+    </div>
+    <div class="picker-group">
+      <span class="picker-kicker">Остальное</span>
+      ${low.map(row).join('')}
+    </div>
+  `;
+
+  sheet.querySelector('.sheet-close')?.addEventListener('click', closeSheet);
+  sheet.querySelectorAll('.task-row').forEach((b) => {
+    b.addEventListener('click', () => {
+      haptic('select');
+      selectCluster(b.dataset.cluster);
+      closeSheet();
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+    });
+  });
+
+  showSheet(sheet);
+}
+
+/* ───────────────────────────────────────────────── country teaser ─────── */
+function openCountrySheet(iso) {
+  if (!DATA) return;
+  const sheet = ensureSheet('country-sheet');
   const c = DATA.clusters[activeCluster];
   const co = c.countries[iso];
-  const sheet = $('#country-sheet'); const scrim = $('#sheet-scrim');
 
-  if (hintShown) { const h = $('#map-hint'); if (h) h.style.opacity = '0'; hintShown = false; }
+  const hint = $('#map-hint'); if (hint) hint.style.opacity = '0';
 
   if (co) {
-    // активная страна — полный тизер
+    // активная страна — полный тизер: services (или кластерные bullets) + факт + 🔒 + CTA
     selectedISO = iso; setMapSelected(iso);
+    const items = (co.services && co.services.length) ? co.services : c.bullets;
     const factHtml = co.fact ? `<p class="sheet-fact">${esc(co.fact)}</p>` : '';
-    const hookHtml = co.hook ? `<p class="sheet-hook">${esc(co.hook)}</p>` : '';
+    const cntHtml = co.n >= 2 ? `<span class="sheet-count">${esc(variantsLabel(co.n))} доступа</span>` : '';
     sheet.innerHTML = `
       <div class="sheet-grab"></div>
       <header class="sheet-head">
         <img class="flag-img" src="${flag(iso, 80)}" alt="">
         <div class="sheet-id">
           <h3 class="sheet-name">${esc(co.name)}</h3>
-          <span class="sheet-cluster">${c.emoji} ${esc(c.label)}</span>
+          <span class="sheet-cluster">${esc(c.emoji)} ${esc(c.label)}</span>
         </div>
         <button class="sheet-close" aria-label="Закрыть">✕</button>
       </header>
-      ${hookHtml}
-      <ul class="sheet-bullets">${c.bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
+      ${cntHtml}
+      <ul class="sheet-bullets">${items.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
       ${factHtml}
       <div class="sheet-locked">
         <span class="lk-ico">🔒</span>
@@ -351,7 +453,7 @@ function openSheet(iso) {
       <button class="btn btn-gold sheet-cta" data-link="${botLink(activeCluster, iso)}">Проверить мой случай — бесплатно →</button>
     `;
   } else {
-    // серая страна — нет прямого доступа → конверт промаха в бота
+    // серая страна — нет прямого доступа по задаче → конверт промаха в бота
     selectedISO = null;
     sheet.innerHTML = `
       <div class="sheet-grab"></div>
@@ -359,7 +461,7 @@ function openSheet(iso) {
         <img class="flag-img" src="${flag(iso, 80)}" alt="">
         <div class="sheet-id">
           <h3 class="sheet-name">${esc(isoName(iso))}</h3>
-          <span class="sheet-cluster">${c.emoji} ${esc(c.label)}</span>
+          <span class="sheet-cluster">${esc(c.emoji)} ${esc(c.label)}</span>
         </div>
         <button class="sheet-close" aria-label="Закрыть">✕</button>
       </header>
@@ -378,37 +480,17 @@ function openSheet(iso) {
   sheet.querySelector('.sheet-cta')?.addEventListener('click', (e) => {
     haptic('medium'); openTgLink(e.currentTarget.dataset.link);
   });
-  sheet.querySelector('#sheet-change')?.addEventListener('click', () => {
-    closeSheet(); window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
+  sheet.querySelector('#sheet-change')?.addEventListener('click', () => { closeSheet(); openTaskPicker(); });
 
-  scrim.hidden = false; sheet.hidden = false; sheet.classList.remove('closing');
-  sheet.scrollTop = 0;
+  showSheet(sheet);
 }
 
 function isoName(iso) {
-  // имя серой страны: ищем в любом кластере, иначе сам код
   for (const cl of DATA.meta.cluster_order) {
     const co = DATA.clusters[cl].countries[iso];
     if (co) return co.name;
   }
   return iso;
-}
-
-function closeSheet() {
-  const sheet = $('#country-sheet'); const scrim = $('#sheet-scrim');
-  if (!sheet || sheet.hidden) return;
-  sheet.classList.add('closing');
-  scrim.hidden = true;
-  const done = () => {
-    sheet.hidden = true; sheet.classList.remove('closing'); sheet.style.transform = '';
-    sheet.removeEventListener('animationend', done); clearTimeout(fallback);
-  };
-  // fallback-таймер: при prefers-reduced-motion анимация подавлена → animationend не стрельнёт,
-  // иначе лист завис бы видимым и заблокировал экран
-  const fallback = setTimeout(done, 320);
-  sheet.addEventListener('animationend', done);
-  if (selectedISO) { setMapSelected(null); }
 }
 
 /* ───────────────────────────────────────────────── boot ───────────────── */
@@ -418,7 +500,7 @@ async function boot() {
   try { tg.ready(); tg.expand(); } catch {}
   try {
     if (atLeast('6.1')) { tg.setHeaderColor('#0a0c10'); tg.setBackgroundColor('#0a0c10'); }
-    if (atLeast('7.7')) tg.disableVerticalSwipes(); // карта не закрывает апку свайпом
+    if (atLeast('7.7')) tg.disableVerticalSwipes(); // карта/жесты не закрывают апку свайпом
   } catch {}
   try { tg.onEvent('themeChanged', () => { applyTheme(); readPalette(); }); } catch {}
 
@@ -428,6 +510,9 @@ async function boot() {
     window.addEventListener('scroll', () => { if (window.scrollY === 0) window.scrollTo(0, 1); }, { passive: true });
   } catch {}
 
+  renderShell();
+  renderSkeleton();   // плейсхолдеры ДО fetch — без пустого тёмного экрана
+
   try {
     const res = await fetch('./map_data.json', { cache: 'no-cache' });
     DATA = await res.json();
@@ -436,12 +521,17 @@ async function boot() {
     console.error('[map_data] load failed', err); return;
   }
 
-  if (!DATA.clusters[activeCluster]) activeCluster = DATA.meta.cluster_order[0];
+  // вернувшийся юзер → его задача (picker не открываем); первый холодный вход → дефолт + picker
+  const saved = (() => { try { return localStorage.getItem('gzh_task'); } catch { return null; } })();
+  if (saved && DATA.clusters[saved]) activeCluster = saved;
+  else if (!DATA.clusters[activeCluster]) activeCluster = DATA.meta.cluster_order[0];
 
-  renderShell();
+  renderActiveTask();
   initMap();
-  selectCluster(activeCluster);
-  firstPaint = false;   // дальше переключения чипов уже скроллят активный в центр
+  renderCountryList();
+  renderGlobalPlate();
+
+  if (!saved) openTaskPicker();   // гейт ПОСЛЕ выбора — только для первого входа
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
