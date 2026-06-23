@@ -87,6 +87,19 @@
 }
 #map-canvas svg { background: transparent; }
 
+/* подписи стран (RU): целим прямо в <text> (группа лейблов в этой версии либы БЕЗ класса; текст в карте = только лейблы).
+   Прячем на общем виде, показываем/увеличиваем при зуме (JS вешает labels-on/z2/z3 на #map-canvas).
+   halo-обводка (paint-order:stroke) — читается и на золотой суше, и на тёмном море/соседях. */
+#map-canvas svg text {
+  fill: #f6efe0; font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 11px;
+  letter-spacing: .2px; pointer-events: none;
+  paint-order: stroke; stroke: rgba(6,9,15,.92); stroke-width: 3px; stroke-linejoin: round;
+  opacity: 0; transition: opacity .2s ease;
+}
+#map-canvas.labels-on svg text { opacity: 1; }
+#map-canvas.labels-z2 svg text { font-size: 13px; }
+#map-canvas.labels-z3 svg text { font-size: 15px; }
+
 /* зум-кнопки jsVectorMap → паспортный стиль */
 .jvm-zoom-btn {
   width: 40px; height: 40px; line-height: 38px;

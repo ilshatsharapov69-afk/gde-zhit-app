@@ -111,6 +111,7 @@ let DATA = null;
 let activeCluster = DEFAULT_CLUSTER;
 let selectedISO = null;
 let map = null;
+let prevActive = new Set();   // прошлый набор подсвеченных (для setValues-перекраски без rebuild)
 let currentSheet = null;   // открытый лист (#task-sheet | #country-sheet)
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -195,7 +196,7 @@ function selectCluster(cl) {
   activeCluster = cl; selectedISO = null;
   try { localStorage.setItem('gzh_task', cl); } catch {}   // вернувшемуся юзеру picker не открываем
   renderActiveTask();
-  rebuildMap();            // перерисовать карту под новый кластер (подсветка + зум-сброс)
+  paintCluster();          // перекрасить подсветку (карта персистентна → подписи стран живут)
   renderCountryList();
   renderGlobalPlate();
   syncMgrBtn();
@@ -269,28 +270,33 @@ function initMap() {
   canvas.innerHTML = '';   // destroy() не всегда чистит контейнер → иначе SVG кластеров копятся (union подсветок)
   const active = new Set(DATA.clusters[activeCluster].iso_list);
   const values = {}; active.forEach((iso) => (values[iso] = 'active'));
+  prevActive = active;
   try {
     map = new JVM({
       selector: '#map-canvas',
       map: 'world_merc',
-      // крупная карта с зумом кнопками/колесом/пинчем. draggable:false — иначе одно-пальцевый drag
-      // по карте панит её и крадёт скролл страницы (scroll-trap); на scale=1 вся суша и так видна.
-      zoomButtons: true, zoomOnScroll: true, draggable: false, bindTouchEvents: true,
-      zoomMax: 4, zoomMin: 1,
+      // крупная ИНТЕРАКТИВНАЯ карта: зум кнопками/колесом/пинчем + перетаскивание (доехать до мелких стран на зуме)
+      zoomButtons: true, zoomOnScroll: true, draggable: true, bindTouchEvents: true,
+      zoomMax: 9, zoomMin: 1, zoomStep: 1.7,
       showTooltip: true, backgroundColor: 'transparent',
       regionStyle: {
         initial: { fill: PAL.land, stroke: PAL.stroke, strokeWidth: 0.5 },
         hover: { fillOpacity: 1, fill: PAL.hover, cursor: 'pointer' },
       },
-      series: { regions: [{ attribute: 'fill', scale: { active: PAL.active, sel: PAL.selected }, values }] },
-      // имя страны по тапу/наведению («подпись при зуме») + статус доступа
+      // подписи стран (RU): спрятаны на общем виде (иначе каша на 390px), ПОЯВЛЯЮТСЯ+РАСТУТ внутри стран при зуме
+      labels: { regions: { render: (code) => buildLabelNames()[code] || '' } },
+      regionLabelStyle: { initial: { fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600, fill: '#f6efe0' } },
+      series: { regions: [{ attribute: 'fill', scale: { active: PAL.active, off: PAL.land, sel: PAL.selected }, values }] },
+      // имя страны по тапу/наведению + статус доступа
       onRegionTooltipShow: (e, tooltip, code) => {
         const co = DATA.clusters[activeCluster].countries[code];
         const nm = co ? co.name : isoName(code);
         tooltip.text(co ? `${nm} · есть доступ` : nm, false);
       },
       onRegionClick: (e, code) => { haptic('light'); openCountrySheet(code); },
+      onViewportChange: (scale) => applyLabelVisibility(scale),
     });
+    applyLabelVisibility(1);   // старт = общий вид → подписи спрятаны
   } catch (err) {
     console.warn('[map] init failed', err);
     canvas.innerHTML = `<div class="map-fallback">Карта не загрузилась — выбирай страну из списка ниже 👇</div>`;
@@ -301,6 +307,39 @@ function initMap() {
 function rebuildMap() {
   if (map) { try { map.destroy(); } catch {} map = null; }
   initMap();
+}
+
+// перекраска подсветки под новый кластер БЕЗ пересоздания карты (иначе теряются подписи) — setValues union(prev,active)
+function paintCluster() {
+  if (!map) { rebuildMap(); return; }
+  const active = new Set(DATA.clusters[activeCluster].iso_list);
+  const union = new Set([...prevActive, ...active]);
+  const v = {};
+  union.forEach((iso) => (v[iso] = active.has(iso) ? 'active' : 'off'));
+  try { map.series.regions[0].setValues(v); }
+  catch (err) { console.warn('[map] setValues failed → rebuild', err); rebuildMap(); }
+  prevActive = active;
+}
+
+// глобальный ISO→RU (имена для подписей всех наших стран; кэш — DATA не меняется)
+let _labelNames = null;
+function buildLabelNames() {
+  if (_labelNames) return _labelNames;
+  const m = {};
+  for (const cl of DATA.meta.cluster_order) {
+    const cs = DATA.clusters[cl].countries;
+    for (const iso in cs) if (!m[iso]) m[iso] = cs[iso].name;
+  }
+  return (_labelNames = m);
+}
+// подписи появляются с LABEL_ZOOM и КРУПНЕЕ на бóльшем зуме (классы labels-on/z2/z3 → CSS)
+const LABEL_ZOOM = 1.8;
+function applyLabelVisibility(scale) {
+  const cv = document.getElementById('map-canvas'); if (!cv) return;
+  const s = scale || 1;
+  cv.classList.toggle('labels-on', s >= LABEL_ZOOM);
+  cv.classList.toggle('labels-z2', s >= 3);
+  cv.classList.toggle('labels-z3', s >= 5);
 }
 
 function setMapSelected(iso) {
