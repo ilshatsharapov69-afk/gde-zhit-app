@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "questions.json — зеркало core/flows.py (генерируется export_questions.py, руками не редактируется)",
+  "type": "object",
+  "required": ["version", "generated_from", "cluster_order", "clusters", "country_step", "contact"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "string", "description": "хеш дампа; апка сравнивает с черновиком gzh_quiz_draft.questions_version" },
+    "generated_from": { "const": "core/flows.py" },
+    "cluster_order": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/cluster_key" },
+      "description": "QUIZ_CLUSTERS минус travel; explore включён (внутренний, но валиден для submit)"
+    },
+    "clusters": { "type": "object", "additionalProperties": { "$ref": "#/$defs/branch" } },
+    "country_step": {
+      "type": "object",
+      "description": "COUNTRY_STEP: cluster → step_key страны",
+      "additionalProperties": { "type": "string" }
+    },
+    "explore_shortlist_cluster": {
+      "type": "object",
+      "description": "EXPLORE_SHORTLIST_CLUSTER (priority-value → реальный кластер); опционально",
+      "additionalProperties": { "type": "string" }
+    },
+    "contact": { "type": "object", "description": "глобальные тексты контакта из bot/texts.py" }
+  },
+  "$defs": {
+    "cluster_key": {
+      "type": "string",
+      "enum": ["birth", "work", "residence", "business", "invest", "housing_buy", "housing_rent", "visa", "finance", "docs", "logistics", "study", "explore"],
+      "description": "UI-агрегаты (services, invest_housing) и travel НЕ входят"
+    },
+    "branch": {
+      "type": "object",
+      "required": ["emoji", "label", "tier", "app_ask_keys", "steps", "plan"],
+      "additionalProperties": false,
+      "properties": {
+        "emoji": { "type": "string", "description": "из map_data" },
+        "label": { "type": "string" },
+        "tier": { "type": "string", "enum": ["high", "low"], "description": "high → кнопка менеджера видна в апке; low → только золотая" },
+        "app_ask_keys": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "ПОДМНОЖЕСТВО step.key которые апка спрашивает (1-2 нужных оператору); остальные добирает бот. country-шаг сюда не входит если предзаполнен с карты"
+        },
+        "steps": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/step" } },
+        "plan": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/plan_rule" },
+          "description": "ПРОД-источник ветвления. Для МОК апка его НЕ исполняет — берёт плоский линейный срез по app_ask_keys"
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "required": ["key", "text", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string", "description": "namespaced; он же ключ в answers" },
+        "text": { "type": "string", "description": "допускает <b>-теги" },
+        "kind": { "type": "string", "enum": ["single", "multi", "country", "country_multi"] },
+        "options": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/option" },
+          "description": "для single/multi; для country/country_multi ПУСТО (апка добирает из map_data)"
+        },
+        "country_cluster": { "type": ["string", "null"], "description": "из какого кластера map_data брать список стран" },
+        "multi_max": { "type": "integer", "default": 3, "description": "(N+1)-я → toast «максимум N»; 0 → toast «отметьте хотя бы одну»" },
+        "note": { "type": "string" },
+        "sensitive": { "type": "boolean", "default": false, "description": "value НЕ логируется в events (b_preg, бюджет/доход/накопления) — приватность §5" },
+        "app_ask": { "type": "boolean", "default": false, "description": "апка показывает шаг только если true (срез §9)" },
+        "required": { "type": "boolean", "default": true }
+      }
+    },
+    "option": {
+      "type": "object",
+      "required": ["value", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "value": { "type": "string", "description": "кладётся в answers[step.key]" },
+        "label": { "type": "string" },
+        "goto": { "type": ["string", "null"], "description": "кросс-веточный увод (3-й элемент кортежа option): апка меняет ветку, переносит ответы, пропускает отвеченные шаги цели" }
+      }
+    },
+    "plan_rule": {
+      "type": "object",
+      "required": ["append"],
+      "additionalProperties": false,
+      "description": "Транслирует if/elif plan-функции. ПРОД-only; в МОК не исполняется.",
+      "properties": {
+        "when": { "type": ["object", "null"], "additionalProperties": true },
+        "append": { "type": "array", "items": { "type": "string" } },
+        "effects": { "type": ["object", "null"], "additionalProperties": true }
+      }
+    }
+  }
+}

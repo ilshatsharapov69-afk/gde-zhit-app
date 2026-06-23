@@ -1,0 +1,57 @@
+{
+  "_note": "МОК-снимок (НЕ источник правды). В проде заменяется дампом export_questions.py из core/flows.py через GET /api/questions. Вопросы/варианты тут — ПЛЕЙСХОЛДЕРЫ под реальные шаги бота. Срез: birth/business/residence (money-кластеры, 1-2 app_ask-вопроса).",
+  "version": "mock-2026-06-23",
+  "generated_from": "core/flows.py",
+  "cluster_order": ["birth", "business", "residence"],
+  "country_step": { "birth": "b_country", "business": "bz_country", "residence": "res_country" },
+  "clusters": {
+    "birth": {
+      "emoji": "🍼", "label": "Родить за границей", "tier": "high",
+      "app_ask_keys": ["b_preg", "b_family"],
+      "steps": [
+        { "key": "b_country", "text": "Какая страна интересует для родов?", "kind": "country", "country_cluster": "birth", "options": [], "app_ask": false },
+        { "key": "b_preg", "text": "Какой сейчас <b>срок беременности</b>?", "kind": "single", "sensitive": true, "app_ask": true, "options": [
+          { "value": "preg_lt20", "label": "до 20 недель", "goto": null },
+          { "value": "preg_20_28", "label": "20–28 недель", "goto": null },
+          { "value": "preg_28_34", "label": "28–34 недели", "goto": null },
+          { "value": "preg_gt34", "label": "34+ недели", "goto": null },
+          { "value": "preg_planning", "label": "🤰 Ещё планируем", "goto": null }
+        ] },
+        { "key": "b_family", "text": "Поедете:", "kind": "single", "app_ask": true, "options": [
+          { "value": "fam_solo", "label": "🙋 Одна", "goto": null },
+          { "value": "fam_couple", "label": "💑 С партнёром", "goto": null }
+        ] }
+      ],
+      "plan": []
+    },
+    "business": {
+      "emoji": "🏢", "label": "Бизнес за границей", "tier": "high",
+      "app_ask_keys": ["bz_need"],
+      "steps": [
+        { "key": "bz_country", "text": "Какая юрисдикция интересует?", "kind": "country", "country_cluster": "business", "options": [], "app_ask": false },
+        { "key": "bz_need", "text": "Что нужно? <b>(можно несколько)</b>", "kind": "multi", "multi_max": 3, "app_ask": true, "options": [
+          { "value": "need_company", "label": "Регистрация компании", "goto": null },
+          { "value": "need_account", "label": "Открытие счёта", "goto": null },
+          { "value": "need_tax", "label": "Налоговое резидентство", "goto": null },
+          { "value": "need_accounting", "label": "Бухгалтерия", "goto": null }
+        ] }
+      ],
+      "plan": []
+    },
+    "residence": {
+      "emoji": "🏠", "label": "ВНЖ / переехать жить", "tier": "high",
+      "app_ask_keys": ["res_when"],
+      "steps": [
+        { "key": "res_country", "text": "Какая страна интересует?", "kind": "country", "country_cluster": "residence", "options": [], "app_ask": false },
+        { "key": "res_when", "text": "Когда планируете переезд?", "kind": "single", "app_ask": true, "options": [
+          { "value": "when_3m", "label": "В ближайшие 3 месяца", "goto": null },
+          { "value": "when_6m", "label": "В течение полугода", "goto": null },
+          { "value": "when_year", "label": "В течение года", "goto": null },
+          { "value": "when_explore", "label": "🧭 Пока изучаю", "goto": null }
+        ] }
+      ],
+      "plan": []
+    }
+  },
+  "contact": {}
+}

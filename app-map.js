@@ -13,6 +13,7 @@ const DEFAULT_CLUSTER = 'birth';             // 1-я денежная задач
 const FRESHNESS       = '06.2026';
 const BRAND           = 'Где Жить';
 const TAGLINE         = 'Что реально оформить за рубежом';
+const MANAGER_FLOW    = new URLSearchParams(location.search).has('managerflow'); // МОК-флаг флоу «Связаться с менеджером» (живая апка по умолчанию без него)
 
 /* ───────────────────────────────────────────────── Telegram bridge ────── */
 const _realTg = window.Telegram && window.Telegram.WebApp;
@@ -173,6 +174,7 @@ function renderShell() {
     cta.className = 'sticky-cta';
     cta.innerHTML = `
       <button class="btn btn-gold" id="cta-btn">Проверить мой случай →</button>
+      ${MANAGER_FLOW ? '<button class="btn mgr-cta" id="mgr-cta-btn" hidden>Связаться с менеджером</button>' : ''}
       <p class="cta-sub"><b>Бесплатно</b> · ответит консультант</p>`;
     document.body.appendChild(cta);
   }
@@ -196,6 +198,14 @@ function selectCluster(cl) {
   rebuildMap();            // перерисовать карту под новый кластер (подсветка + зум-сброс)
   renderCountryList();
   renderGlobalPlate();
+  syncMgrBtn();
+}
+
+// ghost «Связаться с менеджером» видна только на money-кластерах (tier=high) — SPEC §6
+function syncMgrBtn() {
+  if (!MANAGER_FLOW) return;
+  const m = document.getElementById('mgr-cta-btn');
+  if (m) m.hidden = !(DATA && DATA.clusters[activeCluster] && DATA.clusters[activeCluster].tier === 'high');
 }
 
 function renderActiveTask() {
@@ -421,6 +431,8 @@ function openTaskPicker() {
 /* ───────────────────────────────────────────────── country teaser ─────── */
 function openCountrySheet(iso) {
   if (!DATA) return;
+  // режим «смены страны» из флоу менеджера: тап страны кормит флоу, а не открывает тизер
+  if (window.GZH && window.GZH.awaitCountry) { const f = window.GZH.awaitCountry; window.GZH.awaitCountry = null; f(iso); return; }
   const sheet = ensureSheet('country-sheet');
   const c = DATA.clusters[activeCluster];
   const co = c.countries[iso];
@@ -530,9 +542,25 @@ async function boot() {
   initMap();
   renderCountryList();
   renderGlobalPlate();
+  syncMgrBtn();
 
   if (!saved) openTaskPicker();   // гейт ПОСЛЕ выбора — только для первого входа
 }
+
+// мост для manager-flow.js (МОК-прототип флоу «Связаться с менеджером»; активен только за флагом managerflow)
+window.GZH = {
+  cfg: { flag: MANAGER_FLOW, baseUrl: 'MOCK', bot: BOT_USERNAME },
+  get cluster() { return activeCluster; },
+  get iso() { return selectedISO; },
+  set iso(v) { selectedISO = v; },
+  data: () => DATA,
+  selectCluster, openTaskPicker,
+  setCountry(iso) { selectedISO = iso; setMapSelected(iso); },
+  botLink, openTgLink, haptic, toast, esc, plural, flag, atLeast,
+  ensureSheet, showSheet, closeSheet,
+  isTelegram, tg,
+  awaitCountry: null,
+};
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
 else boot();
