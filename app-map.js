@@ -196,7 +196,7 @@ function selectCluster(cl) {
   activeCluster = cl; selectedISO = null;
   try { localStorage.setItem('gzh_task', cl); } catch {}   // вернувшемуся юзеру picker не открываем
   renderActiveTask();
-  paintCluster();          // перекрасить подсветку (карта персистентна → подписи стран живут)
+  rebuildMap();            // пересоздать карту под кластер (подписи = ТОЛЬКО активные/жёлтые страны)
   renderCountryList();
   renderGlobalPlate();
   syncMgrBtn();
@@ -283,9 +283,13 @@ function initMap() {
         initial: { fill: PAL.land, stroke: PAL.stroke, strokeWidth: 0.5 },
         hover: { fillOpacity: 1, fill: PAL.hover, cursor: 'pointer' },
       },
-      // подписи стран (RU): спрятаны на общем виде (иначе каша на 390px), ПОЯВЛЯЮТСЯ+РАСТУТ внутри стран при зуме
-      labels: { regions: { render: (code) => buildLabelNames()[code] || '' } },
-      regionLabelStyle: { initial: { fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600, fill: '#f6efe0' } },
+      // подписи: ТОЛЬКО активные (жёлтые) страны кластера; позиция = центр bbox + оффсет (US: от Аляски к материку);
+      // прогресс по размеру (мелкие появляются на бóльшем зуме) — в updateLabelProgressive(scale).
+      labels: { regions: {
+        render: (code) => { const c = DATA.clusters[activeCluster]; return (c && c.countries[code]) ? c.countries[code].name : ''; },
+        offsets: (code) => LABEL_OFFSETS[code] || [0, 0],
+      } },
+      regionLabelStyle: { initial: { fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 700, fill: '#f6efe0' } },
       series: { regions: [{ attribute: 'fill', scale: { active: PAL.active, off: PAL.land, sel: PAL.selected }, values }] },
       // имя страны по тапу/наведению + статус доступа
       onRegionTooltipShow: (e, tooltip, code) => {
@@ -294,9 +298,10 @@ function initMap() {
         tooltip.text(co ? `${nm} · есть доступ` : nm, false);
       },
       onRegionClick: (e, code) => { haptic('light'); openCountrySheet(code); },
-      onViewportChange: (scale) => applyLabelVisibility(scale),
+      onViewportChange: (scale) => updateLabelProgressive(scale),
     });
-    applyLabelVisibility(1);   // старт = общий вид → подписи спрятаны
+    measureLabels();             // размеры активных стран (для порога появления подписи)
+    updateLabelProgressive(1);   // старт: видны только крупные страны
   } catch (err) {
     console.warn('[map] init failed', err);
     canvas.innerHTML = `<div class="map-fallback">Карта не загрузилась — выбирай страну из списка ниже 👇</div>`;
@@ -321,25 +326,32 @@ function paintCluster() {
   prevActive = active;
 }
 
-// глобальный ISO→RU (имена для подписей всех наших стран; кэш — DATA не меняется)
-let _labelNames = null;
-function buildLabelNames() {
-  if (_labelNames) return _labelNames;
-  const m = {};
-  for (const cl of DATA.meta.cluster_order) {
-    const cs = DATA.clusters[cl].countries;
-    for (const iso in cs) if (!m[iso]) m[iso] = cs[iso].name;
+// центр bbox уезжает у стран с дальними территориями → ручной сдвиг к основной части (map-units)
+// у США bbox растянут на всю карту (Аляска/Алеуты через антимеридиан) → центр в Атлантике; сдвигаем на материк
+const LABEL_OFFSETS = { US: [-260, -26] };
+let labelSizes = {};                      // code → min(bbox.w, bbox.h) активных стран
+const LABEL_SHOW = 70;                    // подпись видна, когда minDim*scale ≥ этого (мелкие — на бóльшем зуме)
+
+function measureLabels() {
+  labelSizes = {};
+  if (!map || !map.regions || !DATA.clusters[activeCluster]) return;
+  for (const code of DATA.clusters[activeCluster].iso_list) {
+    const reg = map.regions[code];
+    if (reg && reg.element && reg.element.shape) {
+      try { const bb = reg.element.shape.getBBox(); labelSizes[code] = Math.min(bb.width, bb.height); } catch {}
+    }
   }
-  return (_labelNames = m);
 }
-// подписи появляются с LABEL_ZOOM и КРУПНЕЕ на бóльшем зуме (классы labels-on/z2/z3 → CSS)
-const LABEL_ZOOM = 1.8;
-function applyLabelVisibility(scale) {
-  const cv = document.getElementById('map-canvas'); if (!cv) return;
+// per-country видимость: крупная страна показывает имя раньше, мелкая — только когда достаточно увеличена
+function updateLabelProgressive(scale) {
+  if (!map || !map.regions) return;
   const s = scale || 1;
-  cv.classList.toggle('labels-on', s >= LABEL_ZOOM);
-  cv.classList.toggle('labels-z2', s >= 3);
-  cv.classList.toggle('labels-z3', s >= 5);
+  if (s > 1.15) { const h = document.getElementById('map-hint'); if (h) h.style.opacity = '0'; }  // подсказка не мешает подписям при зуме
+  for (const code in labelSizes) {
+    const reg = map.regions[code];
+    const node = reg && reg.element && reg.element.label && reg.element.label.node;
+    if (node) node.style.opacity = (labelSizes[code] * s >= LABEL_SHOW) ? '1' : '0';
+  }
 }
 
 function setMapSelected(iso) {

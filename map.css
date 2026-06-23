@@ -91,14 +91,11 @@
    Прячем на общем виде, показываем/увеличиваем при зуме (JS вешает labels-on/z2/z3 на #map-canvas).
    halo-обводка (paint-order:stroke) — читается и на золотой суше, и на тёмном море/соседях. */
 #map-canvas svg text {
-  fill: #f6efe0; font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 11px;
+  fill: #f6efe0; font-family: 'Inter', system-ui, sans-serif; font-weight: 700; font-size: 12px;
   letter-spacing: .2px; pointer-events: none;
-  paint-order: stroke; stroke: rgba(6,9,15,.92); stroke-width: 3px; stroke-linejoin: round;
-  opacity: 0; transition: opacity .2s ease;
+  paint-order: stroke; stroke: rgba(6,9,15,.95); stroke-width: 3.5px; stroke-linejoin: round;
+  opacity: 0; transition: opacity .2s ease;   /* видимость per-label через JS (прогрессивно по размеру страны) */
 }
-#map-canvas.labels-on svg text { opacity: 1; }
-#map-canvas.labels-z2 svg text { font-size: 13px; }
-#map-canvas.labels-z3 svg text { font-size: 15px; }
 
 /* зум-кнопки jsVectorMap → паспортный стиль */
 .jvm-zoom-btn {
