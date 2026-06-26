@@ -148,6 +148,15 @@ function renderShell() {
       </div>
     </header>
 
+    <button class="passport-cta" id="passport-cta">
+      <span class="pc-ico">🪪</span>
+      <span class="pc-text">
+        <span class="pc-title" id="pc-title">Собери Паспорт доступа</span>
+        <span class="pc-sub" id="pc-sub">6 вопросов — твои рабочие пути за рубеж</span>
+      </span>
+      <span class="pc-go">→</span>
+    </button>
+
     <button class="task-bar" id="task-bar" aria-haspopup="dialog">
       <span class="tb-emoji" id="tb-emoji"></span>
       <span class="tb-label" id="tb-label"></span>
@@ -181,6 +190,12 @@ function renderShell() {
   }
 
   // events
+  $('#passport-cta').addEventListener('click', () => {
+    haptic('medium');
+    const P = window.GZH_PASSPORT;
+    if (P) P.start({ mode: P.hasResult() ? 'result' : 'manual' });
+    else openTaskPicker();
+  });
   $('#task-bar').addEventListener('click', () => { haptic('light'); openTaskPicker(); });
   $('#country-list').addEventListener('click', (e) => {
     const card = e.target.closest('.country-card'); if (!card) return;
@@ -200,6 +215,7 @@ function selectCluster(cl) {
   renderCountryList();
   renderGlobalPlate();
   syncMgrBtn();
+  syncPassportBtn();
 }
 
 // ghost «Связаться с менеджером» видна только на money-кластерах (tier=high) — SPEC §6
@@ -213,6 +229,15 @@ function renderActiveTask() {
   const c = DATA.clusters[activeCluster];
   $('#tb-emoji').textContent = c.emoji;
   $('#tb-label').textContent = c.label;
+}
+
+// баннер «Паспорт доступа»: для прошедшего квиз — «Мой Паспорт» (вернуть результат)
+function syncPassportBtn() {
+  const P = window.GZH_PASSPORT;
+  const t = $('#pc-title'); const s = $('#pc-sub');
+  if (!t || !s) return;
+  if (P && P.hasResult()) { t.textContent = 'Мой Паспорт доступа'; s.textContent = 'посмотреть результат и пути'; }
+  else { t.textContent = 'Собери Паспорт доступа'; s.textContent = '6 вопросов — твои рабочие пути за рубеж'; }
 }
 
 // плейсхолдеры до прихода map_data.json — без пустого тёмного экрана в WebView
@@ -510,10 +535,11 @@ function openCountrySheet(iso) {
       <ul class="sheet-bullets">${items.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
       ${factHtml}
       <div class="sheet-locked">
-        <span class="lk-ico">🔒</span>
-        <span>Сроки, стоимость и как именно в твоём случае — на консультации.</span>
+        <span class="nu-badge">нюанс</span>
+        <span>В твоём случае есть нюанс — сроки и документы зависят от паспорта и ситуации. Это уточняет специалист на бесплатной консультации.</span>
       </div>
-      <button class="btn btn-gold sheet-cta" data-link="${botLink(activeCluster, iso)}">Проверить мой случай — бесплатно →</button>
+      <button class="btn btn-gold sheet-cta" data-link="${botLink(activeCluster, iso)}">Разобрать мой случай — бесплатно →</button>
+      <p class="cta-facts">🛡️ Без документов, кодов и предоплаты — только пара вопросов о ситуации.</p>
     `;
   } else {
     // серая страна — нет прямого доступа по задаче → конверт промаха в бота
@@ -594,8 +620,15 @@ async function boot() {
   renderCountryList();
   renderGlobalPlate();
   syncMgrBtn();
+  syncPassportBtn();
 
-  if (!saved) openTaskPicker();   // гейт ПОСЛЕ выбора — только для первого входа
+  // первый холодный вход → ведёт «Паспорт доступа» (его Q1 = задача); иначе старый picker.
+  // вернувшийся юзер (есть gzh_task) сразу на карте, ничего не всплывает.
+  if (!saved) {
+    const P = window.GZH_PASSPORT;
+    if (P) P.start({ mode: P.hasResult() ? 'result' : 'cold' });
+    else openTaskPicker();
+  }
 }
 
 // мост для manager-flow.js (МОК-прототип флоу «Связаться с менеджером»; активен только за флагом managerflow)
@@ -607,6 +640,15 @@ window.GZH = {
   data: () => DATA,
   selectCluster, openTaskPicker,
   setCountry(iso) { selectedISO = iso; setMapSelected(iso); },
+  // подсветить результат Паспорта: задача + 2–3 страны ярче, доскроллить к карте
+  highlightResult(cluster, isos) {
+    if (!DATA || !DATA.clusters[cluster]) return;
+    selectCluster(cluster);
+    const v = {};
+    (isos || []).forEach((iso) => { if (DATA.clusters[cluster].countries[iso]) v[iso] = 'sel'; });
+    if (map && Object.keys(v).length) { try { map.series.regions[0].setValues(v); } catch {} }
+    try { document.querySelector('.map-stage')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch {}
+  },
   botLink, openTgLink, haptic, toast, esc, plural, flag, atLeast,
   ensureSheet, showSheet, closeSheet,
   isTelegram, tg,

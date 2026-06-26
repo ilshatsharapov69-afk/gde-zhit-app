@@ -1,0 +1,216 @@
+/* ============================================================================
+   Где Жить — «Паспорт доступа» (персональная мини-диагностика).
+   Слой поверх карты: интро → квиз (прогресс) → результат (пути+нюансы+CTA+share).
+   Наследует токены из style.css (--gzh-*, --s*, --safe-*). Дизайн-язык «Паспорт».
+   ========================================================================== */
+
+/* --------------------------------------------------- баннер-вход (на карте) */
+.passport-cta {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  min-height: 52px; padding: 8px 12px; margin: 0 0 var(--s3);
+  border-radius: 14px; text-align: left;
+  background: var(--gzh-gold-wash), var(--gzh-plate-bg);
+  border: 1px solid rgba(232,176,75,.5);
+  box-shadow: var(--gzh-gold-inset);
+  color: var(--gzh-text);
+  transition: transform .12s var(--ease-spring), border-color .2s;
+}
+.passport-cta:active { transform: scale(.985); }
+.passport-cta .pc-ico {
+  flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center; font-size: 19px;
+  background: rgba(232,176,75,.12); border: 1px solid rgba(232,176,75,.34);
+}
+.passport-cta .pc-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; line-height: 1.2; }
+.passport-cta .pc-title { font-size: 14.5px; font-weight: 800; letter-spacing: -.2px; color: var(--gzh-accent-2); }
+.passport-cta .pc-sub {
+  font-size: 11.5px; font-weight: 600; color: var(--gzh-subtext);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.passport-cta .pc-go { flex: 0 0 auto; color: var(--gzh-accent); font-size: 18px; font-weight: 800; }
+
+/* --------------------------------------------------------------- слой (overlay) */
+.passport-layer {
+  position: fixed; inset: 0; z-index: 60;
+  background:
+    radial-gradient(120% 70% at 50% -8%, rgba(232,176,75,.06) 0%, transparent 46%),
+    var(--gzh-page);
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  display: flex; flex-direction: column;
+  animation: ppIn .28s var(--ease-spring);
+}
+.passport-layer[hidden] { display: none; }
+@keyframes ppIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.pp-head {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; align-items: center; gap: var(--s2);
+  padding: calc(var(--safe-top) + 8px) var(--s4) 8px;
+  background: rgba(10,12,16,.9);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--gzh-hairline);
+}
+.pp-back, .pp-x {
+  flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--gzh-panel); border: 1px solid var(--gzh-hairline-soft);
+  color: var(--gzh-subtext); font-size: 20px; line-height: 1;
+}
+.pp-back-spacer { width: 34px; flex: 0 0 auto; }
+.pp-brand { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.pp-brand img { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(232,176,75,.5); }
+.pp-brand b { font-size: 14px; font-weight: 800; color: var(--gzh-accent); letter-spacing: -.2px; }
+
+/* прогресс-бар */
+.pp-progress { height: 4px; background: var(--gzh-panel); margin: 0; }
+.pp-progress span {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--gzh-accent-2), var(--gzh-accent));
+  transition: width .35s var(--ease-spring); border-radius: 0 3px 3px 0;
+}
+.pp-step {
+  font-family: var(--gzh-mono); font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  color: var(--gzh-faint); text-align: center; padding: 8px 0 0;
+}
+
+.pp-body {
+  flex: 1; width: 100%; max-width: 520px; margin: 0 auto;
+  padding: var(--s4) var(--s4) calc(var(--safe-bottom) + var(--s6));
+}
+
+/* ---------------------------------------------------------------- интро */
+.pp-intro { text-align: center; padding-top: var(--s5); }
+.pp-seal {
+  width: 72px; height: 72px; margin: var(--s4) auto var(--s4); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 34px;
+  background: rgba(232,176,75,.08); border: 2px solid rgba(232,176,75,.4);
+  box-shadow: 0 0 0 6px rgba(232,176,75,.06);
+}
+.pp-title { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.5px; color: var(--gzh-text); }
+.pp-lead { margin: var(--s3) auto var(--s5); max-width: 340px; font-size: 15px; line-height: 1.5; color: var(--gzh-subtext); }
+.pp-lead b { color: var(--gzh-text); font-weight: 700; }
+.pp-bullets { display: grid; gap: var(--s2); max-width: 320px; margin: 0 auto var(--s6); text-align: left; }
+.pp-bullets li {
+  display: flex; align-items: center; gap: 11px; font-size: 14px; color: var(--gzh-text);
+  padding: 11px 14px; border-radius: 12px;
+  background: var(--gzh-plate-bg); border: 1px solid var(--gzh-hairline);
+}
+.pp-bullets li span { font-size: 18px; flex: 0 0 auto; }
+.pp-intro .btn-gold { max-width: 360px; margin: 0 auto; }
+.pp-skip {
+  display: block; margin: var(--s4) auto 0; padding: 8px 14px;
+  font-size: 13px; font-weight: 600; color: var(--gzh-subtext);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------- вопрос */
+.pp-q { margin: var(--s2) 0 0; font-size: 22px; font-weight: 800; letter-spacing: -.4px; line-height: 1.2; color: var(--gzh-text); }
+.pp-help { margin: var(--s2) 0 0; font-size: 13px; color: var(--gzh-faint); }
+.pp-opts { display: grid; gap: var(--s2); margin-top: var(--s5); }
+
+.pp-opt {
+  display: flex; align-items: center; gap: 13px; width: 100%;
+  min-height: 60px; padding: 12px 14px; border-radius: 14px; text-align: left;
+  background: var(--gzh-plate-bg); border: 1px solid var(--gzh-hairline);
+  color: var(--gzh-text);
+  transition: transform .1s var(--ease-spring), border-color .2s, background .2s;
+}
+.pp-opt:active { transform: scale(.985); }
+.pp-opt.is-on { background: linear-gradient(135deg, rgba(232,176,75,.18), rgba(232,176,75,.06)); border-color: rgba(232,176,75,.55); }
+.pp-opt .pp-opt-e { font-size: 24px; flex: 0 0 auto; width: 30px; text-align: center; }
+.pp-opt .pp-opt-l { font-size: 16px; font-weight: 700; letter-spacing: -.2px; }
+
+/* вариант-кластер (2 строки) */
+.pp-opts-cluster { margin-top: var(--s4); }
+.pp-clo { min-height: 58px; }
+.pp-clo .pp-opt-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pp-clo .pp-opt-t b { font-size: 15.5px; font-weight: 700; letter-spacing: -.2px; }
+.pp-clo .pp-opt-t span {
+  font-size: 12px; color: var(--gzh-faint); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pp-grp-k {
+  margin: var(--s3) 0 2px; font-size: 10.5px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--gzh-faint);
+}
+.pp-grp-k:first-child { margin-top: 0; }
+
+/* ---------------------------------------------------------------- результат */
+.pp-result { padding-top: var(--s4); }
+.pp-rkick {
+  font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--gzh-accent);
+}
+.pp-rtitle { margin: var(--s2) 0 0; font-size: 24px; font-weight: 800; letter-spacing: -.4px; color: var(--gzh-text); }
+.pp-rsub { margin: var(--s2) 0 var(--s5); font-size: 14px; line-height: 1.5; color: var(--gzh-subtext); }
+.pp-rsub b { color: var(--gzh-accent-2); font-weight: 700; }
+
+.pp-path {
+  position: relative; margin-bottom: var(--s3); padding: var(--s4);
+  border-radius: var(--gzh-radius-card);
+  background: var(--gzh-plate-bg); border: 1px solid var(--gzh-hairline);
+  box-shadow: var(--gzh-gold-inset);
+  animation: cardEnter .45s var(--ease-spring) both;
+}
+.pp-path-h { display: flex; align-items: center; gap: 11px; }
+.pp-path-h .flag-img { width: 34px; height: 24px; border-radius: 3px; flex: 0 0 auto; }
+.pp-path-n { flex: 1; min-width: 0; font-size: 18px; font-weight: 800; letter-spacing: -.3px; color: var(--gzh-text); }
+.pp-path-rank {
+  flex: 0 0 auto; font-family: var(--gzh-mono); font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+  color: var(--gzh-num); background: rgba(232,176,75,.1);
+  border: 1px solid rgba(232,176,75,.28); padding: 3px 8px; border-radius: 6px;
+}
+.pp-svc { display: grid; gap: 6px; margin: var(--s3) 0 0; }
+.pp-svc li { font-size: 13.5px; line-height: 1.4; color: var(--gzh-text); display: flex; gap: 8px; }
+.pp-svc li::before { content: "✓"; color: var(--gzh-accent); font-weight: 800; flex: 0 0 auto; }
+
+.pp-nuance {
+  margin-top: var(--s3); padding-top: var(--s3); border-top: 1px dashed var(--gzh-hairline);
+  display: flex; gap: 9px; align-items: flex-start;
+  font-size: 12.5px; line-height: 1.45; color: var(--gzh-subtext);
+}
+
+/* мягкая плашка «нюанс» (вместо 🔒 — без привкуса pay-to-unlock) */
+.nu-badge {
+  flex: 0 0 auto; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--gzh-accent); background: rgba(232,176,75,.1);
+  border: 1px solid rgba(232,176,75,.34); padding: 2px 8px; border-radius: 6px;
+  margin-top: 1px;
+}
+
+/* финанс-крючок (универсальный) */
+.pp-fin {
+  display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+  margin: var(--s2) 0 0; padding: 12px 14px; border-radius: 13px;
+  background: rgba(232,176,75,.05); border: 1px dashed rgba(232,176,75,.42);
+  color: var(--gzh-text); transition: transform .1s var(--ease-spring), border-color .2s;
+}
+.pp-fin:active { transform: scale(.985); }
+.pp-fin .pp-fin-e { font-size: 22px; flex: 0 0 auto; }
+.pp-fin .pp-fin-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; line-height: 1.25; }
+.pp-fin .pp-fin-t b { font-size: 14px; font-weight: 700; color: var(--gzh-accent-2); }
+.pp-fin .pp-fin-t span { font-size: 12px; color: var(--gzh-subtext); }
+.pp-fin .pp-fin-go { flex: 0 0 auto; color: var(--gzh-accent); font-weight: 800; }
+
+/* блок консультации (факты воронки, единый голос с ботом) */
+.pp-consult {
+  margin: var(--s5) 0 0; padding: var(--s4);
+  border-radius: var(--gzh-radius-card);
+  background: var(--gzh-gold-wash), var(--gzh-plate-bg);
+  border: var(--gzh-gold-border); box-shadow: var(--gzh-gold-inset);
+}
+.pp-consult h3 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.3px; color: var(--gzh-text); }
+.pp-consult p { margin: var(--s2) 0 0; font-size: 13px; line-height: 1.5; color: var(--gzh-subtext); }
+.pp-consult .pp-safe { color: var(--gzh-accent-2); font-weight: 600; }
+.pp-consult .btn-gold { margin-top: var(--s4); }
+
+.pp-result-actions { margin-top: var(--s4); display: grid; gap: var(--s2); }
+.pp-map-link, .pp-redo {
+  display: block; margin: 0 auto; padding: 8px 14px;
+  font-size: 13px; font-weight: 600; color: var(--gzh-subtext);
+}
+.pp-map-link { color: var(--gzh-accent-2); text-decoration: underline; text-underline-offset: 3px; }
+.pp-redo { color: var(--gzh-faint); font-size: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .passport-layer, .pp-path, .pp-progress span { animation: none !important; transition: none !important; }
+}

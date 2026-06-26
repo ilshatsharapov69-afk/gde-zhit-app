@@ -298,6 +298,10 @@
 }
 .sheet-locked .lk-ico { flex: 0 0 auto; font-size: 16px; color: var(--gzh-accent); opacity: 1; }
 .sheet-cta { margin-top: var(--s2); }
+.cta-facts {
+  margin: var(--s2) 0 0; text-align: center;
+  font-size: 11.5px; line-height: 1.4; font-weight: 600; color: var(--gzh-accent-2);
+}
 
 .sheet-empty-note {
   margin: var(--s4) 0; padding: var(--s4);
